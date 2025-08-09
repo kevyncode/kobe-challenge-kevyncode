@@ -1,337 +1,195 @@
-# Kode Start by Kobe
+# Rick and Morty Portal 🛸
 
-Neste repositório se encontram os aplicativos desenvolvidos durante as aulas, outros projetos desenvolvidos ao longo do programa e, também, documentações
+Um aplicativo Flutter desenvolvido como desafio técnico que consome a API do Rick and Morty para exibir personagens da série com uma interface moderna e responsiva.
 
-## Links úteis
-- Dart Tour: https://dart.dev/guides/language/language-tour
-- Projects: https://github.com/kobeapps/kode-start/tree/main/projects
+## 📱 Funcionalidades Implementadas
 
-## Dart
-Dart é uma linguagem de programação lançada primeiramente em 2011, sua aplicação inicial era substituir o JavaScript como linguagem principal de desenvolvimento Web. Hoje em dia seu principal uso é através do framework Flutter.
+### ✅ Funcionalidades Principais
 
-É uma linguagem estaticamente tipada, isto é, após um tipo ser atribuído o mesmo não pode mais ser alterado. Sua estrutura é muito parecida com a do Java.
+- **Listagem de personagens**: Grid responsivo com imagens e nomes
+- **Busca e filtros**: Pesquisa por nome, status, espécie e gênero
+- **Paginação infinita**: Carregamento automático de mais personagens ao rolar
+- **Detalhes do personagem**: Página dedicada com informações completas
+- **Sistema de favoritos**: Salvar personagens favoritos localmente
+- **Interface responsiva**: Adaptação para diferentes tamanhos de tela
 
-## Hello World
-Uma ótima maneira de entender a estrutura básica de uma linguagem é conhecendo como fazer o mais básico e conhecido dos códigos, o "Hello World". Sua estrutura em dart é desta maneira:
+### 🎨 Interface e UX
 
-    void main() {
-     print('Olá, Mundo!');
-    }
+- **Tema escuro**: Design inspirado no universo Rick and Morty
+- **Cards personalizados**: Layout com gradientes e sombras
+- **Animações suaves**: Transições e loading states
+- **Cache de imagens**: Performance otimizada com `cached_network_image`
+- **Estados de loading**: Indicadores visuais durante carregamentos
+- **Tratamento de erros**: Feedback visual para erros de conexão
 
-## Comentários
-    // Para adicionar um comentário basta escrevê-lo desta maneira.
-    
-    /*
-    Mas se tiver que falar muita coisa
-    Você pode escrever desta maneira
-    */
-    
-    /// E se quiser documentar uma função ou classe escreva assim.
+## 🏗️ Arquitetura
 
-## Fortemente tipada:
-Dart é fortemente tipada, mas por sua vez não é necessário definir os tipos explicitamente, podendo se utilizar. Por exemplo ao atribuir a variável:
+O projeto segue uma arquitetura limpa e bem organizada:
 
-    var value = 1;
+```
+lib/
+├── main.dart                 # Ponto de entrada da aplicação
+├── core/                     # Configurações centrais
+│   ├── theme/               # Sistema de design (cores, estilos, dimensões)
+│   └── utils/               # Utilitários e helpers
+├── data/                     # Camada de dados
+│   ├── models/              # Modelos de dados (Character, ApiResponse)
+│   └── services/            # Serviços (API, Favoritos)
+└── presentation/             # Camada de apresentação
+    ├── pages/               # Páginas (Home, Detalhes, Favoritos)
+    └── widgets/             # Widgets reutilizáveis
+```
 
-value é inferido como sendo um inteiro. Logo atribuir um valor de um tipo diferente na sequência, como um booleano, resultará em um erro.
+## 🔧 Tecnologias e Dependências
 
-    var value = 1;
-    value = false; //Erro
+### Principais dependências:
 
-Se por alguma necessidade for necessário que o tipo seja dinâmico, existe um tipo especial que foge desta regra, o dynamic, que permite fazer essas atribuições. Porém perdem-se todos os benefícios de uma linguagem fortemente tipada e aumenta e muito a chance de alguma atribuição errada passar despercebida.
+```yaml
+dependencies:
+  flutter: sdk
+  cupertino_icons: ^1.0.8
+  shared_preferences: ^2.5.3 # Armazenamento local
+  http: ^1.4.0 # Requisições HTTP
+  cached_network_image: ^3.4.1 # Cache de imagens
+  flutter_svg: ^2.2.0 # Suporte a SVG
+```
 
-    dynamic value = 1;
-    value = false;
+### Características técnicas:
 
-## Palavras-chave
+- **Flutter SDK**: ^3.8.1
+- **Padrão Singleton**: Para serviços
+- **Tratamento de exceções**: Try/catch com retry automático
+- **Timeout personalizado**: 30 segundos para requisições
+- **Persistência local**: SharedPreferences para favoritos
 
-Se você quer que uma variável nunca seja alterada deve-se usar final ou const, em vez de usar var ou somente o tipo. Uma variável definida como final pode ter seu valor definido apenas uma vez, já uma variável const é uma constante de tempo de compilação. (Uma variável const é implicitamente final)
+## 🚀 Como executar
 
-Se a constante estiver em uma classe deve ser marcado como static const, assim a mesma variável será compartilhada por todas as instâncias da classe e também ser acessível sem instanciar a classe.
+### Pré-requisitos
 
-    final name = 'Bob';
-    final String nickname = 'Bobby';
+- Flutter SDK (3.8.1 ou superior)
+- Dart SDK
+- Android Studio ou VS Code
+- Emulador Android/iOS ou dispositivo físico
 
-  
+### Instalação e execução
 
-    class DetailsPage {
-     static const routeName = '/details';
-    }
+1. **Clone o repositório**:
 
-## Tipos de variáveis
+```bash
+git clone https://github.com/kevyncode/kobe-challenge-kevyncode.git
+cd kobe-challenge-kevyncode
+```
 
-### Números:
+2. **Instale as dependências**:
 
-Dart possui int e double que são subtipos de num;
+```bash
+flutter pub get
+```
 
-    int a = 1;
-    double b = 0.1;
-    num c = a + b;
+3. **Execute o projeto**:
 
-### Booleanos:
+```bash
+flutter run
+```
 
-    bool a = true;
-    bool b = false;
+### Comandos úteis:
 
-### Strings:
+```bash
+# Verificar análise estática
+flutter analyze
 
-Strings podem ser atribuidas com aspas simples ou duplas
+# Executar testes
+flutter test
 
-    String a = 'a';
-    String b = "b";
+# Build para release
+flutter build apk
+```
 
-A interpolação pode ser feita usando um cifrão
+## 🌐 API Integration
 
-    int number = 1;
-    String text = "$number";
+### Rick and Morty API
 
-No caso de ser uma expressão é necessário adicionar chaves.
+- **Base URL**: `https://rickandmortyapi.com/api`
+- **Endpoints utilizados**:
+  - `/character` - Lista de personagens
+  - `/character/?name={name}` - Busca por nome
+  - `/character/?status={status}` - Filtro por status
 
-    int number = 1;
-    String text = "${number.isEven}";
+### Características da integração:
 
-### Listas:
+- ✅ Retry automático (até 3 tentativas)
+- ✅ Timeout configurável (30s)
+- ✅ Tratamento de erros de rede
+- ✅ Verificação de disponibilidade da API
+- ✅ Paginação com scroll infinito
 
-    var list = [1, 2, 3];
-    var list2 = [...list];
-    
-    var nav = [
-     'Home',
-     'Furniture',
-     'Plants',
-     if (promoActive) 'Outlet',
-     promoActive ? 'Sale' : 'Normal
-    ];
+## 🎯 Funcionalidades Detalhadas
 
-### Mapas/Dicionários:
-
-    var nobleGases = {
-     2: 'helium',
-     10: 'neon',
-     18: 'argon',
-    };
+### HomePage
 
-### Generics:
+- Grid de personagens com layout responsivo (2 colunas)
+- Busca em tempo real com debounce
+- Filtros por status, espécie e gênero
+- Scroll infinito para carregamento de mais personagens
+- Pull-to-refresh para atualização
 
-Tipos como listas e mapas possuem possibilidade de utilizar generics para definir os tipos de seus valores internos.
+### CharacterDetailPage
 
-    List<dynamic> myList;
-    Map<dynamic, dynamic> myMap;
-    
-    List<int> myList;
-    Map<String, bool> myMap;
+- Informações completas do personagem
+- Status visual (vivo/morto/desconhecido)
+- Lista de episódios onde aparece
+- Sistema de favoritos integrado
 
-## Propriedades privadas:
+### FavoritesPage
 
-Em Dart não existem palavras como public, protected, e private, para definir uma variável, função ou classe como privada e que só possa ser acessada dentro de determinado contexto basta que seu nome comece com um underline (_);
-
-    class _Class {}
-    var _variable;
-    void _function(){}
-
-## Controle de fluxo e repetição
+- Lista de personagens salvos como favoritos
+- Sincronização com armazenamento local
+- Possibilidade de remover favoritos
 
-    if (year >= 2001) {
-     print('21st century');
-    } else if (year >= 1901) {
-     print('20th century');
-    }
-    
-    final maior = a > b ? a : b;
-    
-    switch (expression) {
-     case value1:
-     // Code to execute if expression matches value1
-     break;
-     case value2:
-     // Code to execute if expression matches value2
-     break;
-     // ... more cases
-     default:
-     // Code to execute if no case matches
-     break;
-    }
+## 💻 Estado Atual do Desenvolvimento
 
-    for (final object in flybyObjects) {
-     print(object);
-    }
+### ✅ Implementado
 
-    for (int month = 1; month <= 12; month++) {
-     print(month);
-    }
+- [x] Estrutura base do projeto
+- [x] Integração com Rick and Morty API
+- [x] Listagem de personagens
+- [x] Sistema de busca e filtros
+- [x] Página de detalhes
+- [x] Sistema de favoritos
+- [x] Design system completo
+- [x] Tratamento de erros
+- [x] Cache de imagens
+- [x] Interface responsiva
 
-    while (year < 2016) {
-     year += 1;
-    }
-
-  
-
-## Null safety:
-
-Dart recentemente recebeu suporte a null safety, isso significa que é possível definir quais variáveis podem ou não receber null. O que tornou o seu analisador muito mais eficiente não permitindo que uma variável seja utilizada antes de ser definida.
-
-    void main() {
-     int value;
-     value = 0;
-     print(value);
-    }
-
-Dependendo do contexto de declaração de uma variável é necessário utilizar a palavra-chave late. Isto só é necessário em casos que o próprio Dart não consegue detectar previamente que uma variável será definida antes de ser executada.
-
-    late int value;
-
-    void main() {    
-     value = 0;    
-     print(value);    
-    }
-
-E quando esta variável pode ser nula, mas quando iremos utilizá-la, a mesma já terá seu valor definido, podemos usar uma exclamação.
-
-    int? value;
-        
-    void main() {    
-     value = 0;    
-     print(value!.toDouble());    
-    }
-
-E se quisermos que uma variável seja nula? Basta Adicionar uma interrogação junto ao tipo.
-
-    String? value;
-
-Além do null safety, o Dart também possui operadores null-aware.
-
-    main() async {
-     String? value;
-     String? trimmedValue = value?.trim();
-     String secondValue = value ?? '';
-    }
-
-  
-
-## Parâmetros:
-
-Dart dá suporte a parâmetros obrigatórios, opcionais, nomeados e posicionais.
-
-    void enableFlags({required bool bold, bool? hidden}) {...}
-    void enableFlags({required bool bold, bool hidden = false}) {...}
-    enableFlags(bold: true, hidden: false);
-
-    String say(String from, String msg, [String? device]) {
-     var result = '$from says $msg';
-     if (device != null) {
-     result = '$result with a $device';
-     }
-     return result;
-    }
-    
-    assert(say('Bob', 'Howdy') == 'Bob says Howdy');
-    assert(say('Bob', 'Howdy', 'smoke signal') == 'Bob says Howdy with a smoke signal');
-
-## Funções:
-
-Dart possui suporte a funções nomeadas e anônimas, arrow functions, inclusive declaração como variáveis com tipagem de retorno e de parâmetros.
-
-    int sum(int a, int b) {return a + b;}
-    int sum2(int a, int b) => a + b;
-    int Function (int, int) sum3;
-    sum3 = (int a, int b) => a + b;
-
-  
-
-    const list = ['apples', 'bananas', 'oranges'];
-    list.forEach((item) {
-     print('${list.indexOf(item)}: $item');
-    });
-
-  
-
-## Classes:
-
-Possui classes abstratas, uso de implements e extends, além de enums e extensions.
-
-    import 'dart:math';
-
-    class Point {
-     static const double xOrigin = 0;
-     static const double yOrigin = 0;
-     double x;
-     double y;
-     Point(this.x, this.y);
-    
-     // Named constructor
-    
-     Point.origin()
-     : x = xOrigin,
-     y = yOrigin;
-     double distanceToOrigin() {
-     return sqrt(x * x + y * y);
-     }
-    }
-    
-      
-    
-    class Point3d extends Point {
-     static const double zOrigin = 0;
-     double z;
-     Point3d(double x, double y, this.z) : super(x, y);
-     
-     // Named constructor
-     Point3d.origin(): z = zOrigin, super.origin();
-
-     @override
-     double distanceToOrigin() {
-     return sqrt(x * x + y * y + z * z);
-     }
-    }
-
-    main() {
-     var a = Point(1, 2);
-     var b = Point.origin();
-     var c = Point(Point.xOrigin, 2);
-     print(a.distanceToOrigin());
-    }
-
-  
-
-## Enum:
-
-    enum SelectedColor {
-     primaryColor,
-     secondaryColor,
-    }
-    
-    extension SelectedColorExtension on SelectedColor {
-     String get name => describeEnum(this);
-     String get displayTitle {
-     switch (this) {
-     case SelectedColor.PrimaryColor:
-     return 'This is the Primary Color';
-     case SelectedColor.SecondaryColor:
-     return 'This is the Secondary Color';
-     default:
-     return 'SelectedScheme Title is null';
-     }
-     }
-    }
-
-## Async e Await
-
-Utilização para tarefas que devem ser feitas de forma assíncrona.
-
-    main() async {
-     try {
-     var value = await Future.delayed(Duration(seconds: 1));
-     print(value.a);
-     } catch (e) {
-     print(e);
-     }
-    }
-
-    main() {
-    Future.delayed(Duration(seconds: 1))
-     .then(
-     (value) => print(value.a),
-     )
-     .catchError((error)=>print(error));
-    }
+### 🔄 Status dos Testes
 
+- Projeto sem erros no `flutter analyze`
+- Estrutura preparada para testes unitários
+
+## 🎨 Design System
+
+O projeto inclui um sistema de design completo e consistente:
+
+### Cores
+
+- **Primary**: #4A90E2 (azul característico)
+- **Secondary**: #00D4AA (verde portal)
+- **Background**: #1A1A1A (tema escuro)
+- **Status colors**: Verde (vivo), Vermelho (morto), Cinza (desconhecido)
+
+### Componentes
+
+- `CharacterCard`: Card de personagem com gradiente
+- `CustomAppBar`: AppBar personalizada com busca
+- `SearchDialog`: Modal de filtros avançados
+- `CharactersList`: Lista responsiva de personagens
+
+## 📱 Screenshots
+
+_Interface moderna com tema escuro inspirado no universo Rick and Morty, cards com gradientes e layout responsivo para diferentes dispositivos._
+
+---
+
+**Desenvolvido por**: Kevyn Rodrigues
+**Desafio técnico**: Kobe Apps
+**Data**: Agosto 2025
