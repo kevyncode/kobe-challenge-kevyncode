@@ -186,7 +186,13 @@ O projeto inclui um sistema de design completo e consistente:
 
 ## 📱 Screenshots
 
-_Interface moderna com tema escuro inspirado no universo Rick and Morty, cards com gradientes e layout responsivo para diferentes dispositivos._
+### Tela Principal
+
+<div align="center">
+  <img src="screenshots/home_page.png" alt="Tela inicial do Rick and Morty Portal" width="300"/>
+</div>
+
+_Interface moderna com tema escuro inspirado no universo Rick and Morty, exibindo personagens em cards com gradientes e layout responsivo._
 
 ---
 
