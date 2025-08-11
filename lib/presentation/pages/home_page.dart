@@ -6,7 +6,7 @@ import '../../core/utils/page_transitions.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/search_dialog.dart';
 import '../widgets/characters_list.dart';
-import '../widgets/filters_drawer.dart'; // Importar o drawer
+import '../widgets/filters_drawer.dart';
 import 'character_detail_page.dart';
 
 /// Página principal que exibe a lista de personagens do Rick and Morty
@@ -21,8 +21,7 @@ class _HomePageState extends State<HomePage> {
   final RickAndMortyApiService _apiService = RickAndMortyApiService();
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final GlobalKey<ScaffoldState> _scaffoldKey =
-      GlobalKey<ScaffoldState>(); // Para controlar o drawer
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   List<CharacterModel> _characters = [];
   bool _isLoading = false;
@@ -31,7 +30,7 @@ class _HomePageState extends State<HomePage> {
   int _currentPage = 1;
   bool _hasNextPage = true;
   String _currentSearch = '';
-  Map<String, dynamic> _currentFilters = {}; // Filtros ativos
+  Map<String, dynamic> _currentFilters = {};
 
   @override
   void initState() {
@@ -62,12 +61,24 @@ class _HomePageState extends State<HomePage> {
     });
 
     try {
+      // A API do Rick and Morty só aceita UM valor por filtro, não múltiplos
+      // Então pegamos apenas o primeiro valor de cada filtro
+      String? statusFilter = _currentFilters['status']?.isNotEmpty == true
+          ? _currentFilters['status'][0]
+          : null;
+      String? speciesFilter = _currentFilters['species']?.isNotEmpty == true
+          ? _currentFilters['species'][0]
+          : null;
+      String? genderFilter = _currentFilters['gender']?.isNotEmpty == true
+          ? _currentFilters['gender'][0]
+          : null;
+
       final response = await _apiService.getCharacters(
         page: _currentPage,
         name: _currentSearch.isEmpty ? null : _currentSearch,
-        status: _currentFilters['status']?.join(','),
-        species: _currentFilters['species']?.join(','),
-        gender: _currentFilters['gender']?.join(','),
+        status: statusFilter,
+        species: speciesFilter,
+        gender: genderFilter,
       );
 
       setState(() {
@@ -143,6 +154,33 @@ class _HomePageState extends State<HomePage> {
     _loadCharacters(refresh: true);
   }
 
+  /// Limpa todos os filtros aplicados
+  void _clearAllFilters() {
+    setState(() {
+      _currentFilters.clear();
+      _currentSearch = '';
+    });
+    _searchController.clear();
+    _loadCharacters(refresh: true);
+  }
+
+  /// Verifica se há filtros ativos
+  bool get _hasActiveFilters {
+    return _currentFilters.isNotEmpty || _currentSearch.isNotEmpty;
+  }
+
+  /// Conta o número total de filtros ativos
+  int get _activeFiltersCount {
+    int count = 0;
+    _currentFilters.forEach((key, value) {
+      if (value is List && value.isNotEmpty) {
+        count += value.length;
+      }
+    });
+    if (_currentSearch.isNotEmpty) count++;
+    return count;
+  }
+
   /// Abre perfil do usuário (implementação futura)
   void _openUserProfile() {
     ScaffoldMessenger.of(
@@ -167,7 +205,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey, // Chave para controlar o drawer
+      key: _scaffoldKey,
       backgroundColor: const Color(0xFF000000),
       appBar: CustomAppBar(
         onFiltersPressed: _openFiltersMenu,
@@ -185,6 +223,7 @@ class _HomePageState extends State<HomePage> {
           onPressed: _openSearchDialog,
           backgroundColor: AppColors.primary,
           shape: const CircleBorder(),
+          heroTag: "search",
           child: const Icon(Icons.search, color: Colors.white, size: 24),
         ),
       ),
@@ -201,6 +240,8 @@ class _HomePageState extends State<HomePage> {
           hasNextPage: _hasNextPage,
           onCharacterTap: _navigateToCharacterDetail,
           onRetry: () => _loadCharacters(refresh: true),
+          isFiltered: _hasActiveFilters,
+          onClearFilters: _clearAllFilters,
         ),
       ),
     );

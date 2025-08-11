@@ -114,6 +114,39 @@ class _FiltersDrawerState extends State<FiltersDrawer> {
                       color: Colors.white70,
                     ),
                   ),
+                  // Aviso sobre limitação da API
+                  if (activeFiltersCount > 3)
+                    Container(
+                      margin: const EdgeInsets.only(top: 8),
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.orange.withOpacity(0.5),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            size: 16,
+                            color: Colors.orange,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Apenas 1 filtro por categoria será aplicado',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: Colors.orange,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -328,6 +361,26 @@ class _FiltersDrawerState extends State<FiltersDrawer> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
+                // Aviso para múltiplos filtros por categoria
+                if (activeCount > 1) ...[
+                  const SizedBox(width: 8),
+                  Tooltip(
+                    message: 'Apenas o primeiro filtro será aplicado',
+                    decoration: BoxDecoration(
+                      color: Colors.black87,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    textStyle: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                    ),
+                    child: Icon(
+                      Icons.info_outline,
+                      size: 16,
+                      color: Colors.orange,
+                    ),
+                  ),
+                ],
                 if (activeCount > 0) ...[
                   const Spacer(),
                   Container(
@@ -336,13 +389,21 @@ class _FiltersDrawerState extends State<FiltersDrawer> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.2),
+                      color: activeCount > 1
+                          ? Colors.orange.withOpacity(0.2)
+                          : AppColors.primary.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(10),
+                      border: activeCount > 1
+                          ? Border.all(
+                              color: Colors.orange.withOpacity(0.5),
+                              width: 1,
+                            )
+                          : null,
                     ),
                     child: Text(
                       '$activeCount',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: activeCount > 1 ? Colors.orange : Colors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
