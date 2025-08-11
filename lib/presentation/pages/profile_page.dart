@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/character_model.dart';
+import '../../data/services/local_auth_service.dart';
 import '../widgets/character_card.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -13,11 +14,13 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage>
     with TickerProviderStateMixin {
   late TabController _tabController;
+  final LocalAuthService _authService = LocalAuthService();
 
-  // Dados do usuário (simulado)
-  String _userName = 'Usuário Rick & Morty';
-  String _userEmail = 'usuario@rickandmorty.com';
+  // Dados do usuário
+  String _userName = '';
+  String _userEmail = '';
   bool _isLoggedIn = false;
+  bool _isLoading = true;
 
   // Lista de favoritos (será implementada com storage local)
   List<CharacterModel> _favoriteCharacters = [];
@@ -26,6 +29,26 @@ class _ProfilePageState extends State<ProfilePage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _checkAuthStatus();
+  }
+
+  Future<void> _checkAuthStatus() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final user = await _authService.getCurrentUser();
+      if (user != null) {
+        setState(() {
+          _isLoggedIn = true;
+          _userName = user['name'] ?? '';
+          _userEmail = user['email'] ?? '';
+        });
+      }
+    } catch (e) {
+      debugPrint('Erro ao verificar status de login: $e');
+    }
+
+    setState(() => _isLoading = false);
   }
 
   @override
@@ -36,6 +59,30 @@ class _ProfilePageState extends State<ProfilePage>
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF000000),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF000000),
+          elevation: 0,
+          leading: IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+          ),
+          title: Text(
+            'Perfil',
+            style: AppTextStyles.headlineMedium.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFF000000),
       appBar: AppBar(
@@ -190,7 +237,7 @@ class _ProfilePageState extends State<ProfilePage>
 
               // Nome do usuário
               Text(
-                _userName,
+                _userName.isNotEmpty ? _userName : 'Usuário',
                 style: AppTextStyles.headlineMedium.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -410,13 +457,30 @@ class _ProfilePageState extends State<ProfilePage>
     showDialog(
       context: context,
       builder: (context) => _LoginDialog(
-        onLogin: (email, password) {
-          setState(() {
-            _isLoggedIn = true;
-            _userEmail = email;
-            _userName = email.split('@')[0];
-          });
-          Navigator.pop(context);
+        onLogin: (email, password) async {
+          try {
+            final user = await _authService.login(email, password);
+            if (user != null && mounted) {
+              setState(() {
+                _isLoggedIn = true;
+                _userEmail = user['email'];
+                _userName = user['name'];
+              });
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Login realizado com sucesso!')),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(e.toString().replaceAll('Exception: ', '')),
+                ),
+              );
+            }
+          }
         },
       ),
     );
@@ -426,13 +490,30 @@ class _ProfilePageState extends State<ProfilePage>
     showDialog(
       context: context,
       builder: (context) => _SignUpDialog(
-        onSignUp: (name, email, password) {
-          setState(() {
-            _isLoggedIn = true;
-            _userName = name;
-            _userEmail = email;
-          });
-          Navigator.pop(context);
+        onSignUp: (name, email, password) async {
+          try {
+            await _authService.register(name, email, password);
+            if (mounted) {
+              setState(() {
+                _isLoggedIn = true;
+                _userName = name;
+                _userEmail = email;
+              });
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Conta criada com sucesso!')),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(e.toString().replaceAll('Exception: ', '')),
+                ),
+              );
+            }
+          }
         },
       ),
     );
@@ -444,12 +525,27 @@ class _ProfilePageState extends State<ProfilePage>
       builder: (context) => _EditProfileDialog(
         currentName: _userName,
         currentEmail: _userEmail,
-        onSave: (name, email) {
-          setState(() {
-            _userName = name;
-            _userEmail = email;
-          });
-          Navigator.pop(context);
+        onSave: (name, email) async {
+          try {
+            await _authService.updateProfile(name, email);
+            if (mounted) {
+              setState(() {
+                _userName = name;
+                _userEmail = email;
+              });
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Perfil atualizado com sucesso!')),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Erro ao atualizar perfil: $e')),
+              );
+            }
+          }
         },
       ),
     );
@@ -493,12 +589,31 @@ class _ProfilePageState extends State<ProfilePage>
             child: const Text('Cancelar'),
           ),
           TextButton(
-            onPressed: () {
-              setState(() {
-                _isLoggedIn = false;
-                _favoriteCharacters.clear();
-              });
-              Navigator.pop(context);
+            onPressed: () async {
+              try {
+                await _authService.logout();
+                if (mounted) {
+                  setState(() {
+                    _isLoggedIn = false;
+                    _favoriteCharacters.clear();
+                    _userName = '';
+                    _userEmail = '';
+                  });
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Logout realizado com sucesso!'),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Erro ao fazer logout: $e')),
+                  );
+                }
+              }
             },
             child: const Text('Sair', style: TextStyle(color: Colors.red)),
           ),
@@ -508,7 +623,7 @@ class _ProfilePageState extends State<ProfilePage>
   }
 }
 
-// Dialog de Login
+// Os dialogs permanecem iguais, mas vou atualizar apenas o _LoginDialog para mostrar loading
 class _LoginDialog extends StatefulWidget {
   final Function(String email, String password) onLogin;
 
@@ -523,6 +638,7 @@ class _LoginDialogState extends State<_LoginDialog> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -536,6 +652,7 @@ class _LoginDialogState extends State<_LoginDialog> {
           children: [
             TextFormField(
               controller: _emailController,
+              enabled: !_isLoading,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 labelText: 'Email',
@@ -553,18 +670,15 @@ class _LoginDialogState extends State<_LoginDialog> {
                 ),
               ),
               validator: (value) {
-                if (value?.isEmpty ?? true) {
-                  return 'Digite seu email';
-                }
-                if (!value!.contains('@')) {
-                  return 'Email inválido';
-                }
+                if (value?.isEmpty ?? true) return 'Digite seu email';
+                if (!value!.contains('@')) return 'Email inválido';
                 return null;
               },
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _passwordController,
+              enabled: !_isLoading,
               style: const TextStyle(color: Colors.white),
               obscureText: !_isPasswordVisible,
               decoration: InputDecoration(
@@ -582,11 +696,13 @@ class _LoginDialogState extends State<_LoginDialog> {
                   borderSide: const BorderSide(color: AppColors.primary),
                 ),
                 suffixIcon: IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _isPasswordVisible = !_isPasswordVisible;
-                    });
-                  },
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          setState(
+                            () => _isPasswordVisible = !_isPasswordVisible,
+                          );
+                        },
                   icon: Icon(
                     _isPasswordVisible
                         ? Icons.visibility
@@ -596,12 +712,9 @@ class _LoginDialogState extends State<_LoginDialog> {
                 ),
               ),
               validator: (value) {
-                if (value?.isEmpty ?? true) {
-                  return 'Digite sua senha';
-                }
-                if (value!.length < 6) {
+                if (value?.isEmpty ?? true) return 'Digite sua senha';
+                if (value!.length < 6)
                   return 'Senha deve ter pelo menos 6 caracteres';
-                }
                 return null;
               },
             ),
@@ -610,17 +723,33 @@ class _LoginDialogState extends State<_LoginDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: _isLoading ? null : () => Navigator.pop(context),
           child: const Text('Cancelar'),
         ),
         ElevatedButton(
-          onPressed: () {
-            if (_formKey.currentState?.validate() ?? false) {
-              widget.onLogin(_emailController.text, _passwordController.text);
-            }
-          },
+          onPressed: _isLoading
+              ? null
+              : () async {
+                  if (_formKey.currentState?.validate() ?? false) {
+                    setState(() => _isLoading = true);
+                    await widget.onLogin(
+                      _emailController.text,
+                      _passwordController.text,
+                    );
+                    setState(() => _isLoading = false);
+                  }
+                },
           style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-          child: const Text('Entrar', style: TextStyle(color: Colors.white)),
+          child: _isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+              : const Text('Entrar', style: TextStyle(color: Colors.white)),
         ),
       ],
     );

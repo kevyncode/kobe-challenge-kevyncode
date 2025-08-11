@@ -48,10 +48,9 @@ class EmptyStateWidget extends StatelessWidget {
               title,
               textAlign: TextAlign.center,
               style: AppTextStyles.headlineMedium.copyWith(
-                // Mudado de headlineSmall para headlineMedium
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
-                fontSize: 20, // Tamanho menor para simular headlineSmall
+                fontSize: 20,
               ),
             ),
             const SizedBox(height: 12),
@@ -69,27 +68,56 @@ class EmptyStateWidget extends StatelessWidget {
 
             // Botão de ação (se fornecido)
             if (buttonText != null && onButtonPressed != null)
-              ElevatedButton.icon(
-                onPressed: onButtonPressed,
-                icon: Icon(
-                  isFiltered ? Icons.filter_alt_off : Icons.refresh,
-                  color: Colors.white,
-                ),
-                label: Text(
-                  buttonText!,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 16,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    debugPrint('EmptyStateWidget: InkWell onTap - início');
+                    debugPrint('EmptyStateWidget: isFiltered: $isFiltered');
+                    debugPrint('EmptyStateWidget: buttonText: $buttonText');
+
+                    try {
+                      onButtonPressed!();
+                      debugPrint(
+                        'EmptyStateWidget: onButtonPressed executado com sucesso',
+                      );
+                    } catch (e) {
+                      debugPrint(
+                        'EmptyStateWidget: Erro ao executar onButtonPressed: $e',
+                      );
+                    }
+
+                    debugPrint('EmptyStateWidget: InkWell onTap - fim');
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isFiltered ? Icons.filter_alt_off : Icons.refresh,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          buttonText!,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

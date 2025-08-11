@@ -24,14 +24,14 @@ class _HomePageState extends State<HomePage> {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  List<CharacterModel> _characters = [];
+  List<CharacterModel> _characters = <CharacterModel>[];
   bool _isLoading = false;
   bool _hasError = false;
   String _errorMessage = '';
   int _currentPage = 1;
   bool _hasNextPage = true;
   String _currentSearch = '';
-  Map<String, dynamic> _currentFilters = {};
+  Map<String, dynamic> _currentFilters = <String, dynamic>{};
 
   @override
   void initState() {
@@ -54,8 +54,9 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _isLoading = true;
       _hasError = false;
+      _errorMessage = '';
       if (refresh) {
-        _characters.clear();
+        _characters = <CharacterModel>[];
         _currentPage = 1;
         _hasNextPage = true;
       }
@@ -84,11 +85,12 @@ class _HomePageState extends State<HomePage> {
 
       setState(() {
         if (refresh) {
-          _characters = response.results;
+          _characters = List<CharacterModel>.from(response.results);
         } else {
           _characters.addAll(response.results);
         }
-        _hasNextPage = response.hasNextPage;
+        // Verificar se há mais páginas baseado no total de páginas e página atual
+        _hasNextPage = _currentPage < response.info.pages;
         if (_hasNextPage) _currentPage++;
         _isLoading = false;
       });
@@ -97,6 +99,10 @@ class _HomePageState extends State<HomePage> {
         _isLoading = false;
         _hasError = true;
         _errorMessage = e.toString();
+        // Se é um refresh e deu erro, garantir que a lista esteja vazia
+        if (refresh) {
+          _characters = <CharacterModel>[];
+        }
       });
     }
   }
@@ -150,18 +156,27 @@ class _HomePageState extends State<HomePage> {
   /// Aplica os filtros selecionados
   void _onFiltersChanged(Map<String, dynamic> filters) {
     setState(() {
-      _currentFilters = filters;
+      // Criar uma cópia mutável dos filtros
+      _currentFilters = Map<String, dynamic>.from(filters);
     });
     _loadCharacters(refresh: true);
   }
 
   /// Limpa todos os filtros aplicados
   void _clearAllFilters() {
+    debugPrint('HomePage: Iniciando _clearAllFilters');
     setState(() {
-      _currentFilters.clear();
+      // Criar novos objetos mutáveis em vez de tentar limpar os existentes
+      _currentFilters = <String, dynamic>{};
       _currentSearch = '';
+      _hasError = false;
+      _errorMessage = '';
+      _characters = <CharacterModel>[];
+      _currentPage = 1;
+      _hasNextPage = true;
     });
     _searchController.clear();
+    debugPrint('HomePage: Chamando _loadCharacters(refresh: true)');
     _loadCharacters(refresh: true);
   }
 
