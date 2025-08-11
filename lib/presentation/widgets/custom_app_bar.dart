@@ -107,7 +107,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
                 centerTitle: true,
                 actions: [
-                  // Ícone de perfil com animação
+                  // Ícone de perfil com SVG personalizado
                   Align(
                     alignment: Alignment.topCenter,
                     child: Padding(
@@ -115,21 +115,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         child: IconButton(
-                          icon: Container(
+                          icon: SvgPicture.asset(
+                            'lib/assets/icons/trailing-icon.svg',
                             width: 32,
                             height: 32,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: AppColors.onPrimary,
-                                width: 2,
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.person,
-                              color: AppColors.onPrimary,
-                              size: 20,
-                            ),
                           ),
                           onPressed: onProfilePressed,
                           tooltip: 'Perfil',

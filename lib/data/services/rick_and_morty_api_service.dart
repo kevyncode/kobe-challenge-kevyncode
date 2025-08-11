@@ -236,57 +236,166 @@ class RickAndMortyApiService {
     return [];
   }
 
-  /// Método para fazer busca combinada com múltiplos filtros
+  /// Método NOVO para fazer busca combinada com múltiplos filtros
+  /// Implementa a lógica "também" (OR) para filtros combinados
+  Future<List<CharacterModel>> getCharactersWithCombinedFilters({
+    int page = 1,
+    String? searchQuery,
+    Map<String, dynamic>? filters,
+  }) async {
+    try {
+      Set<CharacterModel> combinedResults = {};
+      bool hasFilters = false;
+
+      // Se há filtros, faz requisições separadas para cada um
+      if (filters != null && filters.isNotEmpty) {
+        // Status filters
+        if (filters['status'] != null && filters['status'].isNotEmpty) {
+          hasFilters = true;
+          for (String status in filters['status']) {
+            print('Buscando personagens com status: $status');
+            final statusResults = await _getSingleFilterResults(
+              page: page,
+              name: searchQuery,
+              status: status,
+            );
+            combinedResults.addAll(statusResults);
+          }
+        }
+
+        // Gender filters
+        if (filters['gender'] != null && filters['gender'].isNotEmpty) {
+          hasFilters = true;
+          for (String gender in filters['gender']) {
+            print('Buscando personagens com gênero: $gender');
+            final genderResults = await _getSingleFilterResults(
+              page: page,
+              name: searchQuery,
+              gender: gender,
+            );
+            combinedResults.addAll(genderResults);
+          }
+        }
+
+        // Species filters
+        if (filters['species'] != null && filters['species'].isNotEmpty) {
+          hasFilters = true;
+          for (String species in filters['species']) {
+            print('Buscando personagens com espécie: $species');
+            final speciesResults = await _getSingleFilterResults(
+              page: page,
+              name: searchQuery,
+              species: species,
+            );
+            combinedResults.addAll(speciesResults);
+          }
+        }
+      }
+
+      // Se não há filtros específicos, faz busca normal
+      if (!hasFilters) {
+        final normalResults = await _getSingleFilterResults(
+          page: page,
+          name: searchQuery,
+        );
+        combinedResults.addAll(normalResults);
+      }
+
+      // Converter Set para List e ordenar por ID
+      final sortedResults = combinedResults.toList();
+      sortedResults.sort((a, b) => a.id.compareTo(b.id));
+
+      print(
+        'Total de personagens encontrados após combinação e ordenação: ${sortedResults.length}',
+      );
+
+      return sortedResults;
+    } catch (e) {
+      print('Erro na busca combinada: $e');
+      throw ApiException('Erro na busca combinada: ${e.toString()}');
+    }
+  }
+
+  /// Método auxiliar para fazer uma requisição simples com um filtro
+  Future<List<CharacterModel>> _getSingleFilterResults({
+    int page = 1,
+    String? name,
+    String? status,
+    String? species,
+    String? gender,
+  }) async {
+    try {
+      final apiResponse = await getCharacters(
+        page: page,
+        name: name,
+        status: status,
+        species: species,
+        gender: gender,
+      );
+
+      // Se há mais páginas, busca todas
+      List<CharacterModel> allResults = List.from(apiResponse.results);
+
+      // Para filtros combinados, buscar todas as páginas para garantir que temos todos os resultados
+      if (apiResponse.info.pages > 1) {
+        for (
+          int currentPage = 2;
+          currentPage <= apiResponse.info.pages;
+          currentPage++
+        ) {
+          try {
+            final nextPageResponse = await getCharacters(
+              page: currentPage,
+              name: name,
+              status: status,
+              species: species,
+              gender: gender,
+            );
+            allResults.addAll(nextPageResponse.results);
+          } catch (e) {
+            print('Erro ao buscar página $currentPage: $e');
+            // Continue mesmo se uma página falhar
+          }
+        }
+      }
+
+      return allResults;
+    } catch (e) {
+      print('Erro em _getSingleFilterResults: $e');
+      return []; // Retorna lista vazia em caso de erro
+    }
+  }
+
+  /// Método para fazer busca combinada com múltiplos filtros (ATUALIZADO)
   Future<ApiResponseModel<CharacterModel>> searchCharactersWithFilters({
     int page = 1,
     String? searchQuery,
-    List<String>? statusFilters,
-    List<String>? genderFilters,
-    List<String>? speciesFilters,
+    Map<String, dynamic>? filters,
   }) async {
     try {
-      final Map<String, String> queryParams = {'page': page.toString()};
+      // Usa o novo método de filtros combinados
+      final combinedResults = await getCharactersWithCombinedFilters(
+        page: page,
+        searchQuery: searchQuery,
+        filters: filters,
+      );
 
-      // Busca por nome
-      if (searchQuery != null && searchQuery.isNotEmpty) {
-        queryParams['name'] = searchQuery;
-      }
+      // Simula paginação nos resultados combinados
+      final totalResults = combinedResults.length;
+      final itemsPerPage = 20;
+      final totalPages = (totalResults / itemsPerPage).ceil();
 
-      // Filtros de status (alive, dead, unknown)
-      if (statusFilters != null && statusFilters.isNotEmpty) {
-        queryParams['status'] = statusFilters.first.toLowerCase();
-      }
+      final startIndex = (page - 1) * itemsPerPage;
+      final endIndex = (startIndex + itemsPerPage).clamp(0, totalResults);
 
-      // Filtros de gênero
-      if (genderFilters != null && genderFilters.isNotEmpty) {
-        queryParams['gender'] = genderFilters.first.toLowerCase();
-      }
+      final paginatedResults = startIndex < totalResults
+          ? combinedResults.sublist(startIndex, endIndex)
+          : <CharacterModel>[];
 
-      // Filtros de espécie
-      if (speciesFilters != null && speciesFilters.isNotEmpty) {
-        queryParams['species'] = speciesFilters.first;
-      }
-
-      final uri = Uri.https(_baseUrl, '/api/character', queryParams);
-      final response = await _makeRequest(uri);
-
-      if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body) as Map<String, dynamic>;
-        return ApiResponseModel.fromJson(
-          jsonData,
-          (json) => CharacterModel.fromJson(json),
-        );
-      } else if (response.statusCode == 404) {
-        return const ApiResponseModel(
-          info: ApiInfoModel(count: 0, pages: 0),
-          results: [],
-        );
-      } else {
-        throw ApiException(
-          'Falha ao carregar personagens filtrados',
-          response.statusCode,
-        );
-      }
+      return ApiResponseModel(
+        info: ApiInfoModel(count: totalResults, pages: totalPages),
+        results: paginatedResults,
+      );
     } catch (e) {
       if (e is ApiException) rethrow;
       throw ApiException('Erro na busca filtrada: ${e.toString()}');

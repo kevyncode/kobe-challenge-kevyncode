@@ -100,7 +100,7 @@ class _FiltersDrawerState extends State<FiltersDrawer> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Filtros',
+                    'Filtros Combinados',
                     style: AppTextStyles.headlineMedium.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w900,
@@ -108,38 +108,38 @@ class _FiltersDrawerState extends State<FiltersDrawer> {
                   ),
                   Text(
                     activeFiltersCount > 0
-                        ? '$activeFiltersCount filtro${activeFiltersCount > 1 ? 's' : ''} aplicado${activeFiltersCount > 1 ? 's' : ''}'
-                        : 'Refine sua busca',
+                        ? 'Mostrando personagens que atendem ${_getFilterDescription()}'
+                        : 'Combine filtros para refinar sua busca',
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: Colors.white70,
                     ),
                   ),
-                  // Aviso sobre limitação da API
-                  if (activeFiltersCount > 3)
+                  // Info sobre combinação de filtros
+                  if (activeFiltersCount > 1)
                     Container(
                       margin: const EdgeInsets.only(top: 8),
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.orange.withOpacity(0.2),
+                        color: Colors.green.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: Colors.orange.withOpacity(0.5),
+                          color: Colors.green.withOpacity(0.5),
                           width: 1,
                         ),
                       ),
                       child: Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.info_outline,
                             size: 16,
-                            color: Colors.orange,
+                            color: Colors.green,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Apenas 1 filtro por categoria será aplicado',
+                              'Os filtros estão sendo combinados - resultados ordenados por ID da API',
                               style: AppTextStyles.bodySmall.copyWith(
-                                color: Colors.orange,
+                                color: Colors.green,
                                 fontSize: 10,
                               ),
                             ),
@@ -253,7 +253,7 @@ class _FiltersDrawerState extends State<FiltersDrawer> {
                         ),
                       ),
                       child: Text(
-                        '$activeFiltersCount filtro${activeFiltersCount > 1 ? 's' : ''} selecionado${activeFiltersCount > 1 ? 's' : ''}',
+                        _getFilterSummary(),
                         style: AppTextStyles.bodySmall.copyWith(
                           color: AppColors.primary,
                           fontWeight: FontWeight.w600,
@@ -361,26 +361,6 @@ class _FiltersDrawerState extends State<FiltersDrawer> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                // Aviso para múltiplos filtros por categoria
-                if (activeCount > 1) ...[
-                  const SizedBox(width: 8),
-                  Tooltip(
-                    message: 'Apenas o primeiro filtro será aplicado',
-                    decoration: BoxDecoration(
-                      color: Colors.black87,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    textStyle: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                    ),
-                    child: Icon(
-                      Icons.info_outline,
-                      size: 16,
-                      color: Colors.orange,
-                    ),
-                  ),
-                ],
                 if (activeCount > 0) ...[
                   const Spacer(),
                   Container(
@@ -389,21 +369,13 @@ class _FiltersDrawerState extends State<FiltersDrawer> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: activeCount > 1
-                          ? Colors.orange.withOpacity(0.2)
-                          : AppColors.primary.withOpacity(0.2),
+                      color: AppColors.primary.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(10),
-                      border: activeCount > 1
-                          ? Border.all(
-                              color: Colors.orange.withOpacity(0.5),
-                              width: 1,
-                            )
-                          : null,
                     ),
                     child: Text(
                       '$activeCount',
-                      style: TextStyle(
-                        color: activeCount > 1 ? Colors.orange : Colors.white,
+                      style: const TextStyle(
+                        color: Colors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -465,6 +437,9 @@ class _FiltersDrawerState extends State<FiltersDrawer> {
         }
       } else {
         _filters[filterType].remove(value);
+        if (_filters[filterType].isEmpty) {
+          _filters.remove(filterType);
+        }
       }
     });
   }
@@ -500,6 +475,56 @@ class _FiltersDrawerState extends State<FiltersDrawer> {
       return filterList.length;
     }
     return 0;
+  }
+
+  // Método para gerar descrição dos filtros
+  String _getFilterDescription() {
+    List<String> descriptions = [];
+
+    if (_filters['status']?.isNotEmpty == true) {
+      descriptions.add('${_filters['status'].length} status');
+    }
+    if (_filters['gender']?.isNotEmpty == true) {
+      descriptions.add(
+        '${_filters['gender'].length} gênero${_filters['gender'].length > 1 ? 's' : ''}',
+      );
+    }
+    if (_filters['species']?.isNotEmpty == true) {
+      descriptions.add(
+        '${_filters['species'].length} espécie${_filters['species'].length > 1 ? 's' : ''}',
+      );
+    }
+
+    if (descriptions.isEmpty) return '';
+    if (descriptions.length == 1) return descriptions.first;
+    if (descriptions.length == 2) {
+      return '${descriptions[0]} ou ${descriptions[1]}';
+    }
+
+    return '${descriptions.sublist(0, descriptions.length - 1).join(', ')} ou ${descriptions.last}';
+  }
+
+  // Método para resumo dos filtros
+  String _getFilterSummary() {
+    List<String> active = [];
+
+    _filters.forEach((key, value) {
+      if (value is List && value.isNotEmpty) {
+        switch (key) {
+          case 'status':
+            active.add('Status: ${value.join(', ')}');
+            break;
+          case 'gender':
+            active.add('Gênero: ${value.join(', ')}');
+            break;
+          case 'species':
+            active.add('Espécie: ${value.join(', ')}');
+            break;
+        }
+      }
+    });
+
+    return active.join(' • ');
   }
 
   // Ícones para Status
