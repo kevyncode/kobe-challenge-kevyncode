@@ -2,17 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:ui';
 import '../../core/theme/app_theme.dart';
+import '../pages/profile_page.dart'; // Adicionar este import
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final VoidCallback onFiltersPressed;
-  final VoidCallback onProfilePressed;
+  final VoidCallback? onFiltersPressed; // Tornar opcional
+  final VoidCallback? onProfilePressed; // Tornar opcional
   final bool useBackButton;
   final ScrollController? scrollController;
 
   const CustomAppBar({
     super.key,
-    required this.onFiltersPressed,
-    required this.onProfilePressed,
+    this.onFiltersPressed, // Opcional
+    this.onProfilePressed, // Opcional
     this.useBackButton = false,
     this.scrollController,
   });
@@ -59,7 +60,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                           useBackButton ? Icons.arrow_back : Icons.menu,
                           color: AppColors.onPrimary,
                         ),
-                        onPressed: onFiltersPressed,
+                        onPressed: useBackButton
+                            ? () => Navigator.of(context)
+                                  .pop() // Voltar
+                            : onFiltersPressed, // Abrir filtros
                         tooltip: useBackButton ? 'Voltar' : 'Filtros',
                       ),
                     ),
@@ -120,7 +124,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                             width: 32,
                             height: 32,
                           ),
-                          onPressed: onProfilePressed,
+                          onPressed: () => _navigateToProfile(context),
                           tooltip: 'Perfil',
                         ),
                       ),
@@ -134,6 +138,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         );
       },
     );
+  }
+
+  // Método para navegar sempre para o perfil
+  void _navigateToProfile(BuildContext context) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const ProfilePage()));
   }
 
   @override

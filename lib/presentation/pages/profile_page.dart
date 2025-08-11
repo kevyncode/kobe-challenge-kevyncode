@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/character_model.dart';
 import '../../data/services/local_auth_service.dart';
@@ -8,6 +10,7 @@ import '../widgets/dialogs/signup_dialog.dart';
 import '../widgets/dialogs/edit_profile_dialog.dart';
 import '../widgets/profile/profile_header.dart';
 import '../widgets/profile/settings_tab.dart';
+import 'character_detail_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -27,13 +30,15 @@ class _ProfilePageState extends State<ProfilePage>
   bool _isLoggedIn = false;
   bool _isLoading = true;
 
-  // Lista de favoritos (será implementada com storage local)
-  final List<CharacterModel> _favoriteCharacters = [];
+  // Lista de favoritos - agora carregada do SharedPreferences
+  List<CharacterModel> _favoriteCharacters = [];
+  bool _isLoadingFavorites = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(_onTabChanged);
     _checkAuthStatus();
   }
 
@@ -41,6 +46,13 @@ class _ProfilePageState extends State<ProfilePage>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _onTabChanged() {
+    // Quando mudamos para a aba de favoritos (index 0), recarregar
+    if (_tabController.index == 0 && _isLoggedIn) {
+      _loadFavorites();
+    }
   }
 
   Future<void> _checkAuthStatus() async {
@@ -54,12 +66,60 @@ class _ProfilePageState extends State<ProfilePage>
           _userName = user['name'] ?? '';
           _userEmail = user['email'] ?? '';
         });
+        // Carregar favoritos após login
+        _loadFavorites();
       }
     } catch (e) {
       debugPrint('Erro ao verificar status de login: $e');
     }
 
     setState(() => _isLoading = false);
+  }
+
+  // Novo método para carregar favoritos do SharedPreferences
+  Future<void> _loadFavorites() async {
+    if (_isLoadingFavorites) return;
+
+    setState(() => _isLoadingFavorites = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      List<String> favoritesJson;
+
+      try {
+        favoritesJson =
+            prefs.getStringList('favorite_characters') ?? <String>[];
+      } catch (e) {
+        debugPrint('Erro ao carregar favoritos: $e');
+        favoritesJson = <String>[];
+      }
+
+      List<CharacterModel> loadedFavorites = [];
+
+      for (String json in favoritesJson) {
+        try {
+          final characterData = jsonDecode(json);
+          if (characterData is Map<String, dynamic>) {
+            final character = CharacterModel.fromJson(characterData);
+            loadedFavorites.add(character);
+          }
+        } catch (e) {
+          debugPrint('Erro ao decodificar favorito: $e');
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _favoriteCharacters = loadedFavorites;
+        });
+      }
+    } catch (e) {
+      debugPrint('Erro geral ao carregar favoritos: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingFavorites = false);
+      }
+    }
   }
 
   @override
@@ -113,9 +173,7 @@ class _ProfilePageState extends State<ProfilePage>
             const SizedBox(height: 24),
             Text(
               'Carregando perfil...',
-              style: AppTextStyles.bodyLarge.copyWith(
-                color: Colors.white.withValues(alpha: 0.8),
-              ),
+              style: AppTextStyles.bodyMedium.copyWith(color: Colors.white70),
             ),
           ],
         ),
@@ -142,51 +200,43 @@ class _ProfilePageState extends State<ProfilePage>
           children: [
             // Ícone de perfil animado
             Container(
-              width: 140,
-              height: 140,
+              width: 120,
+              height: 120,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
                     AppColors.primary.withValues(alpha: 0.2),
-                    AppColors.primary.withValues(alpha: 0.05),
+                    AppColors.primary.withValues(alpha: 0.1),
                   ],
                 ),
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.4),
-                  width: 3,
-                ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.2),
+                    color: AppColors.primary.withValues(alpha: 0.3),
                     blurRadius: 20,
                     spreadRadius: 5,
                   ),
                 ],
               ),
-              child: Icon(
-                Icons.person_rounded,
-                size: 70,
-                color: AppColors.primary,
-              ),
+              child: Icon(Icons.person, size: 60, color: AppColors.primary),
             ),
             const SizedBox(height: 40),
 
             Text(
-              '🚀 Bem-vindo ao Rick & Morty!',
+              '👋 Olá! Faça login para continuar',
               style: AppTextStyles.headlineMedium.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w900,
-                fontSize: 26,
+                fontSize: 22,
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
 
             Text(
-              'Faça login para salvar seus personagens favoritos e personalizar sua experiência interdimensional.',
+              'Acesse sua conta para gerenciar favoritos, configurações e muito mais.',
               style: AppTextStyles.bodyLarge.copyWith(
-                color: Colors.white.withValues(alpha: 0.8),
+                color: Colors.white70,
                 height: 1.6,
                 fontSize: 16,
               ),
@@ -198,7 +248,7 @@ class _ProfilePageState extends State<ProfilePage>
             _buildActionButton(
               onPressed: _showLoginDialog,
               icon: Icons.login_rounded,
-              label: 'Fazer Login',
+              label: 'Entrar',
               isPrimary: true,
             ),
             const SizedBox(height: 16),
@@ -291,18 +341,9 @@ class _ProfilePageState extends State<ProfilePage>
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white60,
             labelStyle: const TextStyle(fontWeight: FontWeight.w700),
-            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500),
             tabs: const [
-              Tab(
-                icon: Icon(Icons.favorite_rounded),
-                text: 'Favoritos',
-                height: 60,
-              ),
-              Tab(
-                icon: Icon(Icons.settings_rounded),
-                text: 'Configurações',
-                height: 60,
-              ),
+              Tab(text: 'Favoritos'),
+              Tab(text: 'Configurações'),
             ],
           ),
         ),
@@ -319,6 +360,27 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget _buildFavoritesTab() {
+    if (_isLoadingFavorites) {
+      return Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              const Color(0xFF000000),
+              AppColors.primary.withValues(alpha: 0.03),
+            ],
+          ),
+        ),
+        child: const Center(
+          child: CircularProgressIndicator(
+            color: AppColors.primary,
+            strokeWidth: 3,
+          ),
+        ),
+      );
+    }
+
     if (_favoriteCharacters.isEmpty) {
       return Container(
         decoration: BoxDecoration(
@@ -333,13 +395,13 @@ class _ProfilePageState extends State<ProfilePage>
         ),
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.all(40.0),
+            padding: const EdgeInsets.all(24.0), // Reduzido de 40.0 para 24.0
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 120,
-                  height: 120,
+                  width: 80, // Reduzido de 120 para 80
+                  height: 80, // Reduzido de 120 para 80
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -358,28 +420,65 @@ class _ProfilePageState extends State<ProfilePage>
                   ),
                   child: Icon(
                     Icons.favorite_border_rounded,
-                    size: 60,
+                    size: 40, // Reduzido de 60 para 40
                     color: AppColors.primary.withValues(alpha: 0.8),
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 20), // Reduzido de 32 para 20
                 Text(
                   '💫 Nenhum favorito ainda',
                   style: AppTextStyles.headlineMedium.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
-                    fontSize: 18, // Diminuído de 22 para 18
+                    fontSize: 16, // Reduzido de 18 para 16
                   ),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  'Explore os personagens e adicione seus favoritos aqui! Seus personagens favoritos aparecerão nesta seção.',
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    color: Colors.white.withValues(alpha: 0.7),
-                    height: 1.6,
-                    fontSize: 14, // Diminuído para 14
+                const SizedBox(height: 12), // Reduzido de 16 para 12
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                  ), // Padding lateral
+                  child: Text(
+                    'Explore os personagens e adicione seus favoritos aqui! Seus personagens favoritos aparecerão nesta seção.',
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      height: 1.4, // Reduzido de 1.6 para 1.4
+                      fontSize: 13, // Reduzido de 14 para 13
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 3, // Limitando a 3 linhas
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24), // Reduzido de 32 para 24
+                SizedBox(
+                  height: 44, // Altura fixa para o botão
+                  child: ElevatedButton.icon(
+                    onPressed: _loadFavorites,
+                    icon: const Icon(
+                      Icons.refresh,
+                      color: Colors.white,
+                      size: 18,
+                    ), // Ícone menor
+                    label: const Text(
+                      'Atualizar',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14, // Tamanho menor
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ), // Padding menor
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -388,22 +487,85 @@ class _ProfilePageState extends State<ProfilePage>
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
-      itemCount: _favoriteCharacters.length,
-      itemBuilder: (context, index) {
-        final character = _favoriteCharacters[index];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16.0),
-          child: CharacterCard(
-            character: character,
-            onTap: () {
-              // Navegar para detalhes do personagem
-            },
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            const Color(0xFF000000),
+            AppColors.primary.withValues(alpha: 0.03),
+          ],
+        ),
+      ),
+      child: Column(
+        children: [
+          // Header com contador
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
+              border: Border(
+                bottom: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.favorite, color: AppColors.primary, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  '${_favoriteCharacters.length} ${_favoriteCharacters.length == 1 ? 'favorito' : 'favoritos'}',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: _loadFavorites,
+                  icon: const Icon(Icons.refresh, color: Colors.white70),
+                  tooltip: 'Atualizar favoritos',
+                ),
+              ],
+            ),
           ),
-        );
-      },
+          // Lista de favoritos
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16.0),
+              itemCount: _favoriteCharacters.length,
+              itemBuilder: (context, index) {
+                final character = _favoriteCharacters[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: CharacterCard(
+                    character: character,
+                    onTap: () => _navigateToCharacterDetail(character),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
+  }
+
+  void _navigateToCharacterDetail(CharacterModel character) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CharacterDetailPage(character: character),
+      ),
+    ).then((_) {
+      // Recarregar favoritos quando voltar da página de detalhes
+      _loadFavorites();
+    });
   }
 
   Widget _buildSettingsTabContent() {
@@ -455,17 +617,10 @@ class _ProfilePageState extends State<ProfilePage>
                 color: Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
-                Icons.logout_rounded,
-                color: Colors.red,
-                size: 20,
-              ),
+              child: const Icon(Icons.logout, color: Colors.red, size: 20),
             ),
             const SizedBox(width: 12),
-            const Text(
-              'Sair da Conta',
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
+            const Text('Sair da Conta', style: TextStyle(color: Colors.white)),
           ],
         ),
         content: const Text(
@@ -488,13 +643,7 @@ class _ProfilePageState extends State<ProfilePage>
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text(
-              'Sair',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            child: const Text('Sair', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -514,6 +663,8 @@ class _ProfilePageState extends State<ProfilePage>
         if (mounted) {
           Navigator.pop(context);
           _showSuccessSnackBar('Login realizado com sucesso! 🎉');
+          // Carregar favoritos após login bem-sucedido
+          _loadFavorites();
         }
       }
     } catch (e) {
@@ -535,6 +686,8 @@ class _ProfilePageState extends State<ProfilePage>
         });
         Navigator.pop(context);
         _showSuccessSnackBar('Conta criada com sucesso! Bem-vindo! 🎊');
+        // Carregar favoritos após registro
+        _loadFavorites();
       }
     } catch (e) {
       if (mounted) {
