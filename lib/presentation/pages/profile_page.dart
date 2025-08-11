@@ -3,6 +3,11 @@ import '../../core/theme/app_theme.dart';
 import '../../data/models/character_model.dart';
 import '../../data/services/local_auth_service.dart';
 import '../widgets/character_card.dart';
+import '../widgets/dialogs/login_dialog.dart';
+import '../widgets/dialogs/signup_dialog.dart';
+import '../widgets/dialogs/edit_profile_dialog.dart';
+import '../widgets/profile/profile_header.dart';
+import '../widgets/profile/settings_tab.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -23,13 +28,19 @@ class _ProfilePageState extends State<ProfilePage>
   bool _isLoading = true;
 
   // Lista de favoritos (será implementada com storage local)
-  List<CharacterModel> _favoriteCharacters = [];
+  final List<CharacterModel> _favoriteCharacters = [];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _checkAuthStatus();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _checkAuthStatus() async {
@@ -52,158 +63,206 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
-        backgroundColor: const Color(0xFF000000),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF000000),
-          elevation: 0,
-          leading: IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-          ),
-          title: Text(
-            'Perfil',
-            style: AppTextStyles.headlineMedium.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ),
-        body: const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
-      );
+      return _buildLoadingScreen();
     }
 
     return Scaffold(
       backgroundColor: const Color(0xFF000000),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF000000),
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-        ),
-        title: Text(
-          'Perfil',
-          style: AppTextStyles.headlineMedium.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        actions: [
-          if (_isLoggedIn)
-            IconButton(
-              onPressed: _logout,
-              icon: const Icon(Icons.logout, color: Colors.white),
-              tooltip: 'Sair',
-            ),
-        ],
-      ),
+      appBar: _buildAppBar(),
       body: _isLoggedIn ? _buildLoggedInView() : _buildLoginView(),
     );
   }
 
-  Widget _buildLoginView() {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Ícone de perfil
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.primary.withOpacity(0.3),
-                width: 2,
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: const Color(0xFF000000),
+      elevation: 0,
+      leading: IconButton(
+        onPressed: () => Navigator.pop(context),
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+      ),
+      title: Text(
+        'Perfil',
+        style: AppTextStyles.headlineMedium.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      actions: [
+        if (_isLoggedIn)
+          IconButton(
+            onPressed: _showLogoutDialog,
+            icon: const Icon(Icons.logout_rounded, color: Colors.white),
+            tooltip: 'Sair',
+          ),
+      ],
+    );
+  }
+
+  Widget _buildLoadingScreen() {
+    return Scaffold(
+      backgroundColor: const Color(0xFF000000),
+      appBar: _buildAppBar(),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: AppColors.primary, strokeWidth: 3),
+            const SizedBox(height: 24),
+            Text(
+              'Carregando perfil...',
+              style: AppTextStyles.bodyLarge.copyWith(
+                color: Colors.white.withValues(alpha: 0.8),
               ),
             ),
-            child: Icon(Icons.person, size: 60, color: AppColors.primary),
-          ),
-          const SizedBox(height: 32),
+          ],
+        ),
+      ),
+    );
+  }
 
-          Text(
-            'Bem-vindo ao Rick & Morty!',
-            style: AppTextStyles.headlineMedium.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
+  Widget _buildLoginView() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            const Color(0xFF000000),
+            AppColors.primary.withValues(alpha: 0.05),
+          ],
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Ícone de perfil animado
+            Container(
+              width: 140,
+              height: 140,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.2),
+                    AppColors.primary.withValues(alpha: 0.05),
+                  ],
+                ),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.4),
+                  width: 3,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.2),
+                    blurRadius: 20,
+                    spreadRadius: 5,
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.person_rounded,
+                size: 70,
+                color: AppColors.primary,
+              ),
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 40),
 
-          Text(
-            'Faça login para salvar seus personagens favoritos e personalizar sua experiência.',
-            style: AppTextStyles.bodyLarge.copyWith(
-              color: Colors.white70,
-              height: 1.5,
+            Text(
+              '🚀 Bem-vindo ao Rick & Morty!',
+              style: AppTextStyles.headlineMedium.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 26,
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 48),
+            const SizedBox(height: 20),
 
-          // Botão de Login
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
+            Text(
+              'Faça login para salvar seus personagens favoritos e personalizar sua experiência interdimensional.',
+              style: AppTextStyles.bodyLarge.copyWith(
+                color: Colors.white.withValues(alpha: 0.8),
+                height: 1.6,
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 60),
+
+            // Botões de ação
+            _buildActionButton(
               onPressed: _showLoginDialog,
-              icon: const Icon(Icons.login, color: Colors.white),
-              label: const Text(
-                'Fazer Login',
-                style: TextStyle(
+              icon: Icons.login_rounded,
+              label: 'Fazer Login',
+              isPrimary: true,
+            ),
+            const SizedBox(height: 16),
+
+            _buildActionButton(
+              onPressed: _showSignUpDialog,
+              icon: Icons.person_add_rounded,
+              label: 'Criar Conta',
+              isPrimary: false,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required VoidCallback onPressed,
+    required IconData icon,
+    required String label,
+    required bool isPrimary,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: isPrimary
+          ? ElevatedButton.icon(
+              onPressed: onPressed,
+              icon: Icon(icon, color: Colors.white),
+              label: Text(
+                label,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                 ),
+                elevation: 8,
+                shadowColor: AppColors.primary.withValues(alpha: 0.4),
               ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Botão de Criar Conta
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: _showSignUpDialog,
-              icon: const Icon(Icons.person_add, color: AppColors.primary),
-              label: const Text(
-                'Criar Conta',
+            )
+          : OutlinedButton.icon(
+              onPressed: onPressed,
+              icon: Icon(icon, color: AppColors.primary),
+              label: Text(
+                label,
                 style: TextStyle(
                   color: AppColors.primary,
                   fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppColors.primary, width: 2),
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                side: BorderSide(color: AppColors.primary, width: 2),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -211,56 +270,15 @@ class _ProfilePageState extends State<ProfilePage>
     return Column(
       children: [
         // Header do perfil
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(24.0),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
-            ),
-          ),
-          child: Column(
-            children: [
-              // Avatar
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.person, size: 40, color: Colors.white),
-              ),
-              const SizedBox(height: 16),
-
-              // Nome do usuário
-              Text(
-                _userName.isNotEmpty ? _userName : 'Usuário',
-                style: AppTextStyles.headlineMedium.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 4),
-
-              // Email do usuário
-              Text(
-                _userEmail,
-                style: AppTextStyles.bodyMedium.copyWith(color: Colors.white70),
-              ),
-            ],
-          ),
-        ),
+        ProfileHeader(userName: _userName, userEmail: _userEmail),
 
         // Tabs
         Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
             border: Border(
               bottom: BorderSide(
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
                 width: 1,
               ),
             ),
@@ -268,13 +286,23 @@ class _ProfilePageState extends State<ProfilePage>
           child: TabBar(
             controller: _tabController,
             indicatorColor: AppColors.primary,
-            indicatorWeight: 3,
+            indicatorWeight: 4,
+            indicatorSize: TabBarIndicatorSize.tab,
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white60,
-            labelStyle: const TextStyle(fontWeight: FontWeight.w600),
+            labelStyle: const TextStyle(fontWeight: FontWeight.w700),
+            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500),
             tabs: const [
-              Tab(icon: Icon(Icons.favorite), text: 'Favoritos'),
-              Tab(icon: Icon(Icons.settings), text: 'Configurações'),
+              Tab(
+                icon: Icon(Icons.favorite_rounded),
+                text: 'Favoritos',
+                height: 60,
+              ),
+              Tab(
+                icon: Icon(Icons.settings_rounded),
+                text: 'Configurações',
+                height: 60,
+              ),
             ],
           ),
         ),
@@ -283,7 +311,7 @@ class _ProfilePageState extends State<ProfilePage>
         Expanded(
           child: TabBarView(
             controller: _tabController,
-            children: [_buildFavoritesTab(), _buildSettingsTab()],
+            children: [_buildFavoritesTab(), _buildSettingsTabContent()],
           ),
         ),
       ],
@@ -292,44 +320,69 @@ class _ProfilePageState extends State<ProfilePage>
 
   Widget _buildFavoritesTab() {
     if (_favoriteCharacters.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.favorite_border,
-                  size: 60,
-                  color: AppColors.primary.withOpacity(0.7),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Nenhum favorito ainda',
-                style: AppTextStyles.headlineMedium.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 20,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Explore os personagens e adicione seus favoritos aqui!',
-                style: AppTextStyles.bodyLarge.copyWith(
-                  color: Colors.white70,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
+      return Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              const Color(0xFF000000),
+              AppColors.primary.withValues(alpha: 0.03),
             ],
+          ),
+        ),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(40.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.primary.withValues(alpha: 0.15),
+                        AppColors.primary.withValues(alpha: 0.05),
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        blurRadius: 20,
+                        spreadRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.favorite_border_rounded,
+                    size: 60,
+                    color: AppColors.primary.withValues(alpha: 0.8),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Text(
+                  '💫 Nenhum favorito ainda',
+                  style: AppTextStyles.headlineMedium.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18, // Diminuído de 22 para 18
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Explore os personagens e adicione seus favoritos aqui! Seus personagens favoritos aparecerão nesta seção.',
+                  style: AppTextStyles.bodyLarge.copyWith(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    height: 1.6,
+                    fontSize: 14, // Diminuído para 14
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -353,672 +406,206 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  Widget _buildSettingsTab() {
-    return ListView(
-      padding: const EdgeInsets.all(16.0),
-      children: [
-        _buildSettingsTile(
-          icon: Icons.edit,
-          title: 'Editar Perfil',
-          subtitle: 'Alterar nome e informações',
-          onTap: _editProfile,
-        ),
-        _buildSettingsTile(
-          icon: Icons.notifications,
-          title: 'Notificações',
-          subtitle: 'Gerenciar notificações do app',
-          onTap: () {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('Em breve!')));
-          },
-        ),
-        _buildSettingsTile(
-          icon: Icons.privacy_tip,
-          title: 'Privacidade',
-          subtitle: 'Configurações de privacidade',
-          onTap: () {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('Em breve!')));
-          },
-        ),
-        _buildSettingsTile(
-          icon: Icons.info,
-          title: 'Sobre o App',
-          subtitle: 'Versão 1.0.0',
-          onTap: _showAboutDialog,
-        ),
-        const SizedBox(height: 32),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: _logout,
-            icon: const Icon(Icons.logout, color: Colors.red),
-            label: const Text(
-              'Sair da Conta',
-              style: TextStyle(
-                color: Colors.red,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Colors.red, width: 2),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ),
-      ],
+  Widget _buildSettingsTabContent() {
+    return SettingsTab(
+      onEditProfile: _editProfile,
+      onLogout: _showLogoutDialog,
     );
   }
 
-  Widget _buildSettingsTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12.0),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
-      ),
-      child: ListTile(
-        onTap: onTap,
-        leading: Icon(icon, color: AppColors.primary, size: 24),
-        title: Text(
-          title,
-          style: AppTextStyles.titleMedium.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: AppTextStyles.bodyMedium.copyWith(color: Colors.white70),
-        ),
-        trailing: const Icon(
-          Icons.arrow_forward_ios,
-          color: Colors.white60,
-          size: 16,
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      ),
-    );
-  }
-
+  // Métodos dos dialogs
   void _showLoginDialog() {
     showDialog(
       context: context,
-      builder: (context) => _LoginDialog(
-        onLogin: (email, password) async {
-          try {
-            final user = await _authService.login(email, password);
-            if (user != null && mounted) {
-              setState(() {
-                _isLoggedIn = true;
-                _userEmail = user['email'];
-                _userName = user['name'];
-              });
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Login realizado com sucesso!')),
-              );
-            }
-          } catch (e) {
-            if (mounted) {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(e.toString().replaceAll('Exception: ', '')),
-                ),
-              );
-            }
-          }
-        },
-      ),
+      barrierDismissible: false,
+      builder: (context) => LoginDialog(onLogin: _handleLogin),
     );
   }
 
   void _showSignUpDialog() {
     showDialog(
       context: context,
-      builder: (context) => _SignUpDialog(
-        onSignUp: (name, email, password) async {
-          try {
-            await _authService.register(name, email, password);
-            if (mounted) {
-              setState(() {
-                _isLoggedIn = true;
-                _userName = name;
-                _userEmail = email;
-              });
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Conta criada com sucesso!')),
-              );
-            }
-          } catch (e) {
-            if (mounted) {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(e.toString().replaceAll('Exception: ', '')),
-                ),
-              );
-            }
-          }
-        },
-      ),
+      barrierDismissible: false,
+      builder: (context) => SignUpDialog(onSignUp: _handleSignUp),
     );
   }
 
   void _editProfile() {
     showDialog(
       context: context,
-      builder: (context) => _EditProfileDialog(
+      builder: (context) => EditProfileDialog(
         currentName: _userName,
         currentEmail: _userEmail,
-        onSave: (name, email) async {
-          try {
-            await _authService.updateProfile(name, email);
-            if (mounted) {
-              setState(() {
-                _userName = name;
-                _userEmail = email;
-              });
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Perfil atualizado com sucesso!')),
-              );
-            }
-          } catch (e) {
-            if (mounted) {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Erro ao atualizar perfil: $e')),
-              );
-            }
-          }
-        },
+        onSave: _handleProfileUpdate,
       ),
     );
   }
 
-  void _showAboutDialog() {
-    showAboutDialog(
-      context: context,
-      applicationName: 'Rick & Morty App',
-      applicationVersion: '1.0.0',
-      applicationIcon: Icon(
-        Icons.rocket_launch,
-        color: AppColors.primary,
-        size: 48,
-      ),
-      children: [
-        Text(
-          'Um app incrível para explorar o universo de Rick and Morty!',
-          style: AppTextStyles.bodyMedium,
-        ),
-      ],
-    );
-  }
-
-  void _logout() {
+  void _showLogoutDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1C1B1F),
-        title: const Text(
-          'Sair da Conta',
-          style: TextStyle(color: Colors.white),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.logout_rounded,
+                color: Colors.red,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Sair da Conta',
+              style: TextStyle(color: Colors.white, fontSize: 18),
+            ),
+          ],
         ),
         content: const Text(
-          'Tem certeza que deseja sair da sua conta?',
-          style: TextStyle(color: Colors.white70),
+          'Tem certeza que deseja sair da sua conta? Você precisará fazer login novamente para acessar seus dados.',
+          style: TextStyle(color: Colors.white70, height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+            child: Text(
+              'Cancelar',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+            ),
           ),
-          TextButton(
-            onPressed: () async {
-              try {
-                await _authService.logout();
-                if (mounted) {
-                  setState(() {
-                    _isLoggedIn = false;
-                    _favoriteCharacters.clear();
-                    _userName = '';
-                    _userEmail = '';
-                  });
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Logout realizado com sucesso!'),
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Erro ao fazer logout: $e')),
-                  );
-                }
-              }
-            },
-            child: const Text('Sair', style: TextStyle(color: Colors.red)),
+          ElevatedButton(
+            onPressed: _handleLogout,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'Sair',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
     );
   }
-}
 
-// Os dialogs permanecem iguais, mas vou atualizar apenas o _LoginDialog para mostrar loading
-class _LoginDialog extends StatefulWidget {
-  final Function(String email, String password) onLogin;
+  // Handlers
+  Future<void> _handleLogin(String email, String password) async {
+    try {
+      final user = await _authService.login(email, password);
+      if (user != null && mounted) {
+        setState(() {
+          _isLoggedIn = true;
+          _userEmail = user['email'];
+          _userName = user['name'];
+        });
+        if (mounted) {
+          Navigator.pop(context);
+          _showSuccessSnackBar('Login realizado com sucesso! 🎉');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        _showErrorSnackBar(e.toString().replaceAll('Exception: ', ''));
+      }
+    }
+  }
 
-  const _LoginDialog({required this.onLogin});
+  Future<void> _handleSignUp(String name, String email, String password) async {
+    try {
+      await _authService.register(name, email, password);
+      if (mounted) {
+        setState(() {
+          _isLoggedIn = true;
+          _userName = name;
+          _userEmail = email;
+        });
+        Navigator.pop(context);
+        _showSuccessSnackBar('Conta criada com sucesso! Bem-vindo! 🎊');
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        _showErrorSnackBar(e.toString().replaceAll('Exception: ', ''));
+      }
+    }
+  }
 
-  @override
-  State<_LoginDialog> createState() => _LoginDialogState();
-}
+  Future<void> _handleProfileUpdate(String name, String email) async {
+    try {
+      await _authService.updateProfile(name, email);
+      if (mounted) {
+        setState(() {
+          _userName = name;
+          _userEmail = email;
+        });
+        Navigator.pop(context);
+        _showSuccessSnackBar('Perfil atualizado com sucesso! ✨');
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        _showErrorSnackBar('Erro ao atualizar perfil: $e');
+      }
+    }
+  }
 
-class _LoginDialogState extends State<_LoginDialog> {
-  final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _isPasswordVisible = false;
-  bool _isLoading = false;
+  Future<void> _handleLogout() async {
+    try {
+      await _authService.logout();
+      if (mounted) {
+        setState(() {
+          _isLoggedIn = false;
+          _favoriteCharacters.clear();
+          _userName = '';
+          _userEmail = '';
+        });
+        Navigator.pop(context);
+        _showSuccessSnackBar('Logout realizado com sucesso! 👋');
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        _showErrorSnackBar('Erro ao fazer logout: $e');
+      }
+    }
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: const Color(0xFF1C1B1F),
-      title: const Text('Login', style: TextStyle(color: Colors.white)),
-      content: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: _emailController,
-              enabled: !_isLoading,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                labelText: 'Email',
-                labelStyle: const TextStyle(color: Colors.white70),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.primary),
-                ),
-              ),
-              validator: (value) {
-                if (value?.isEmpty ?? true) return 'Digite seu email';
-                if (!value!.contains('@')) return 'Email inválido';
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _passwordController,
-              enabled: !_isLoading,
-              style: const TextStyle(color: Colors.white),
-              obscureText: !_isPasswordVisible,
-              decoration: InputDecoration(
-                labelText: 'Senha',
-                labelStyle: const TextStyle(color: Colors.white70),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.primary),
-                ),
-                suffixIcon: IconButton(
-                  onPressed: _isLoading
-                      ? null
-                      : () {
-                          setState(
-                            () => _isPasswordVisible = !_isPasswordVisible,
-                          );
-                        },
-                  icon: Icon(
-                    _isPasswordVisible
-                        ? Icons.visibility
-                        : Icons.visibility_off,
-                    color: Colors.white70,
-                  ),
-                ),
-              ),
-              validator: (value) {
-                if (value?.isEmpty ?? true) return 'Digite sua senha';
-                if (value!.length < 6)
-                  return 'Senha deve ter pelo menos 6 caracteres';
-                return null;
-              },
-            ),
-          ],
-        ),
+  // Utilities
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFF4CAF50),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 3),
       ),
-      actions: [
-        TextButton(
-          onPressed: _isLoading ? null : () => Navigator.pop(context),
-          child: const Text('Cancelar'),
-        ),
-        ElevatedButton(
-          onPressed: _isLoading
-              ? null
-              : () async {
-                  if (_formKey.currentState?.validate() ?? false) {
-                    setState(() => _isLoading = true);
-                    await widget.onLogin(
-                      _emailController.text,
-                      _passwordController.text,
-                    );
-                    setState(() => _isLoading = false);
-                  }
-                },
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-          child: _isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  ),
-                )
-              : const Text('Entrar', style: TextStyle(color: Colors.white)),
-        ),
-      ],
     );
   }
-}
 
-// Dialog de Cadastro
-class _SignUpDialog extends StatefulWidget {
-  final Function(String name, String email, String password) onSignUp;
-
-  const _SignUpDialog({required this.onSignUp});
-
-  @override
-  State<_SignUpDialog> createState() => _SignUpDialogState();
-}
-
-class _SignUpDialogState extends State<_SignUpDialog> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _isPasswordVisible = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: const Color(0xFF1C1B1F),
-      title: const Text('Criar Conta', style: TextStyle(color: Colors.white)),
-      content: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: _nameController,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                labelText: 'Nome',
-                labelStyle: const TextStyle(color: Colors.white70),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.primary),
-                ),
-              ),
-              validator: (value) {
-                if (value?.isEmpty ?? true) {
-                  return 'Digite seu nome';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _emailController,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                labelText: 'Email',
-                labelStyle: const TextStyle(color: Colors.white70),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.primary),
-                ),
-              ),
-              validator: (value) {
-                if (value?.isEmpty ?? true) {
-                  return 'Digite seu email';
-                }
-                if (!value!.contains('@')) {
-                  return 'Email inválido';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _passwordController,
-              style: const TextStyle(color: Colors.white),
-              obscureText: !_isPasswordVisible,
-              decoration: InputDecoration(
-                labelText: 'Senha',
-                labelStyle: const TextStyle(color: Colors.white70),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.primary),
-                ),
-                suffixIcon: IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _isPasswordVisible = !_isPasswordVisible;
-                    });
-                  },
-                  icon: Icon(
-                    _isPasswordVisible
-                        ? Icons.visibility
-                        : Icons.visibility_off,
-                    color: Colors.white70,
-                  ),
-                ),
-              ),
-              validator: (value) {
-                if (value?.isEmpty ?? true) {
-                  return 'Digite sua senha';
-                }
-                if (value!.length < 6) {
-                  return 'Senha deve ter pelo menos 6 caracteres';
-                }
-                return null;
-              },
-            ),
-          ],
-        ),
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 4),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            if (_formKey.currentState?.validate() ?? false) {
-              widget.onSignUp(
-                _nameController.text,
-                _emailController.text,
-                _passwordController.text,
-              );
-            }
-          },
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-          child: const Text(
-            'Criar Conta',
-            style: TextStyle(color: Colors.white),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// Dialog de Edição de Perfil
-class _EditProfileDialog extends StatefulWidget {
-  final String currentName;
-  final String currentEmail;
-  final Function(String name, String email) onSave;
-
-  const _EditProfileDialog({
-    required this.currentName,
-    required this.currentEmail,
-    required this.onSave,
-  });
-
-  @override
-  State<_EditProfileDialog> createState() => _EditProfileDialogState();
-}
-
-class _EditProfileDialogState extends State<_EditProfileDialog> {
-  final _formKey = GlobalKey<FormState>();
-  late TextEditingController _nameController;
-  late TextEditingController _emailController;
-
-  @override
-  void initState() {
-    super.initState();
-    _nameController = TextEditingController(text: widget.currentName);
-    _emailController = TextEditingController(text: widget.currentEmail);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: const Color(0xFF1C1B1F),
-      title: const Text('Editar Perfil', style: TextStyle(color: Colors.white)),
-      content: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: _nameController,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                labelText: 'Nome',
-                labelStyle: const TextStyle(color: Colors.white70),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.primary),
-                ),
-              ),
-              validator: (value) {
-                if (value?.isEmpty ?? true) {
-                  return 'Digite seu nome';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _emailController,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                labelText: 'Email',
-                labelStyle: const TextStyle(color: Colors.white70),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: AppColors.primary),
-                ),
-              ),
-              validator: (value) {
-                if (value?.isEmpty ?? true) {
-                  return 'Digite seu email';
-                }
-                if (!value!.contains('@')) {
-                  return 'Email inválido';
-                }
-                return null;
-              },
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            if (_formKey.currentState?.validate() ?? false) {
-              widget.onSave(_nameController.text, _emailController.text);
-            }
-          },
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-          child: const Text('Salvar', style: TextStyle(color: Colors.white)),
-        ),
-      ],
     );
   }
 }
