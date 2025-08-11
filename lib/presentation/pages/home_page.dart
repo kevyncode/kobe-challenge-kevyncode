@@ -8,6 +8,7 @@ import '../widgets/search_dialog.dart';
 import '../widgets/characters_list.dart';
 import '../widgets/filters_drawer.dart';
 import 'character_detail_page.dart';
+import 'profile_page.dart';
 
 /// Página principal que exibe a lista de personagens do Rick and Morty
 class HomePage extends StatefulWidget {
@@ -169,23 +170,12 @@ class _HomePageState extends State<HomePage> {
     return _currentFilters.isNotEmpty || _currentSearch.isNotEmpty;
   }
 
-  /// Conta o número total de filtros ativos
-  int get _activeFiltersCount {
-    int count = 0;
-    _currentFilters.forEach((key, value) {
-      if (value is List && value.isNotEmpty) {
-        count += value.length;
-      }
-    });
-    if (_currentSearch.isNotEmpty) count++;
-    return count;
-  }
-
-  /// Abre perfil do usuário (implementação futura)
+  /// Abre perfil do usuário
   void _openUserProfile() {
-    ScaffoldMessenger.of(
+    Navigator.push(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Perfil - Em breve!')));
+      PageTransitions.subtleFadeTransition<void>(page: const ProfilePage()),
+    );
   }
 
   /// Abre dialog de busca
