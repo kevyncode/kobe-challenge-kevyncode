@@ -75,8 +75,12 @@ class _LoginDialogState extends State<LoginDialog> {
                 ),
               ),
               validator: (value) {
-                if (value?.isEmpty ?? true) return 'Digite seu email';
-                if (!value!.contains('@')) return 'Email inválido';
+                if (value?.isEmpty ?? true) {
+                  return 'Digite seu email';
+                }
+                if (!value!.contains('@')) {
+                  return 'Email inválido';
+                }
                 return null;
               },
             ),
@@ -123,9 +127,12 @@ class _LoginDialogState extends State<LoginDialog> {
                 ),
               ),
               validator: (value) {
-                if (value?.isEmpty ?? true) return 'Digite sua senha';
-                if (value!.length < 6)
+                if (value?.isEmpty ?? true) {
+                  return 'Digite sua senha';
+                }
+                if (value!.length < 6) {
                   return 'Senha deve ter pelo menos 6 caracteres';
+                }
                 return null;
               },
             ),
@@ -150,7 +157,9 @@ class _LoginDialogState extends State<LoginDialog> {
                       _emailController.text,
                       _passwordController.text,
                     );
-                    if (mounted) setState(() => _isLoading = false);
+                    if (mounted) {
+                      setState(() => _isLoading = false);
+                    }
                   }
                 },
           style: ElevatedButton.styleFrom(

@@ -34,7 +34,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         return Container(
           decoration: BoxDecoration(
             // Efeito de vidro com backdrop filter
-            color: const Color(0xFF1C1B1F).withOpacity(opacity),
+            color: const Color(0xFF1C1B1F).withValues(alpha: opacity),
           ),
           child: ClipRRect(
             child: BackdropFilter(
@@ -46,7 +46,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 backgroundColor:
                     Colors.transparent, // Transparente para o efeito
                 elevation: scrollOffset > 50 ? 4.0 : 0.0, // Sombra suave
-                shadowColor: Colors.black.withOpacity(0.3),
+                shadowColor: Colors.black.withValues(alpha: 0.3),
                 toolbarHeight: 130.0,
                 leadingWidth: 56,
                 leading: Align(

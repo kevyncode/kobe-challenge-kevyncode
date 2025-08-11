@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/character_model.dart';
 import '../models/api_response_model.dart';
@@ -253,7 +254,7 @@ class RickAndMortyApiService {
         if (filters['status'] != null && filters['status'].isNotEmpty) {
           hasFilters = true;
           for (String status in filters['status']) {
-            print('Buscando personagens com status: $status');
+            debugPrint('Buscando personagens com status: $status');
             final statusResults = await _getSingleFilterResults(
               page: page,
               name: searchQuery,
@@ -267,7 +268,7 @@ class RickAndMortyApiService {
         if (filters['gender'] != null && filters['gender'].isNotEmpty) {
           hasFilters = true;
           for (String gender in filters['gender']) {
-            print('Buscando personagens com gênero: $gender');
+            debugPrint('Buscando personagens com gênero: $gender');
             final genderResults = await _getSingleFilterResults(
               page: page,
               name: searchQuery,
@@ -281,7 +282,7 @@ class RickAndMortyApiService {
         if (filters['species'] != null && filters['species'].isNotEmpty) {
           hasFilters = true;
           for (String species in filters['species']) {
-            print('Buscando personagens com espécie: $species');
+            debugPrint('Buscando personagens com espécie: $species');
             final speciesResults = await _getSingleFilterResults(
               page: page,
               name: searchQuery,
@@ -305,13 +306,13 @@ class RickAndMortyApiService {
       final sortedResults = combinedResults.toList();
       sortedResults.sort((a, b) => a.id.compareTo(b.id));
 
-      print(
+      debugPrint(
         'Total de personagens encontrados após combinação e ordenação: ${sortedResults.length}',
       );
 
       return sortedResults;
     } catch (e) {
-      print('Erro na busca combinada: $e');
+      debugPrint('Erro na busca combinada: $e');
       throw ApiException('Erro na busca combinada: ${e.toString()}');
     }
   }
@@ -353,7 +354,7 @@ class RickAndMortyApiService {
             );
             allResults.addAll(nextPageResponse.results);
           } catch (e) {
-            print('Erro ao buscar página $currentPage: $e');
+            debugPrint('Erro ao buscar página $currentPage: $e');
             // Continue mesmo se uma página falhar
           }
         }
@@ -361,7 +362,7 @@ class RickAndMortyApiService {
 
       return allResults;
     } catch (e) {
-      print('Erro em _getSingleFilterResults: $e');
+      debugPrint('Erro em _getSingleFilterResults: $e');
       return []; // Retorna lista vazia em caso de erro
     }
   }

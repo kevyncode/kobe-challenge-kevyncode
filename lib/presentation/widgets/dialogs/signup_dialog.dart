@@ -75,9 +75,12 @@ class _SignUpDialogState extends State<SignUpDialog> {
                 ),
               ),
               validator: (value) {
-                if (value?.isEmpty ?? true) return 'Digite seu nome';
-                if (value!.length < 2)
+                if (value?.isEmpty ?? true) {
+                  return 'Digite seu nome';
+                }
+                if (value!.length < 2) {
                   return 'Nome deve ter pelo menos 2 caracteres';
+                }
                 return null;
               },
             ),
@@ -108,7 +111,9 @@ class _SignUpDialogState extends State<SignUpDialog> {
                 ),
               ),
               validator: (value) {
-                if (value?.isEmpty ?? true) return 'Digite seu email';
+                if (value?.isEmpty ?? true) {
+                  return 'Digite seu email';
+                }
                 if (!RegExp(
                   r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
                 ).hasMatch(value!)) {
@@ -155,9 +160,12 @@ class _SignUpDialogState extends State<SignUpDialog> {
                 ),
               ),
               validator: (value) {
-                if (value?.isEmpty ?? true) return 'Digite sua senha';
-                if (value!.length < 6)
+                if (value?.isEmpty ?? true) {
+                  return 'Digite sua senha';
+                }
+                if (value!.length < 6) {
                   return 'Senha deve ter pelo menos 6 caracteres';
+                }
                 return null;
               },
             ),
