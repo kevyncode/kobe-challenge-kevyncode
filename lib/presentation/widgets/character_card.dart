@@ -77,13 +77,16 @@ class CharacterCard extends StatelessWidget {
                 Expanded(
                   flex: 1, // 1/4 do espaço para o nome
                   child: Container(
+                    width: double.infinity,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
                         colors: [
-                          Color(0xFF8B5FBF), // Roxo similar à imagem
-                          Color(0xFF6A9BD1), // Azul similar à imagem
+                          Color(0xFF87A1FA), // Cor solicitada
+                          Color(
+                            0xFF87A1FA,
+                          ), // Mesma cor para um gradiente sólido
                         ],
                       ),
                       borderRadius: BorderRadius.only(
@@ -91,23 +94,24 @@ class CharacterCard extends StatelessWidget {
                         bottomRight: Radius.circular(AppRadius.large),
                       ),
                     ),
-                    padding: EdgeInsets.symmetric(
-                      vertical: AppSpacing.small,
-                      horizontal: AppSpacing.small,
+                    padding: const EdgeInsets.only(
+                      left: 16.0, // 16px da parede esquerda
+                      right: 8.0, // Padding menor na direita
+                      top: 8.0,
+                      bottom: 8.0,
                     ),
-                    child: Center(
-                      child: Text(
-                        character.name.toUpperCase(),
-                        style: AppTextStyles.titleMedium.copyWith(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 2, // Permite 2 linhas para nomes maiores
-                        overflow: TextOverflow.ellipsis,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      character.name.toUpperCase(),
+                      style: AppTextStyles.titleMedium.copyWith(
+                        color: Colors.white,
+                        fontSize: 15, // 15px
+                        fontWeight: FontWeight.w900, // 900 black
+                        letterSpacing: 0.5,
                       ),
+                      textAlign: TextAlign.left,
+                      maxLines: 2, // Permite 2 linhas para nomes maiores
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),

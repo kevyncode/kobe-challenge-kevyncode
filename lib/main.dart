@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'presentation/pages/home_page.dart';
 import 'core/theme/app_theme.dart';
 
@@ -18,19 +19,38 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.primary,
           brightness: Brightness.dark,
+          surface: AppColors.surface, // Mantém a cor original dos cards
         ),
-        scaffoldBackgroundColor: AppColors.background,
+        scaffoldBackgroundColor: const Color(
+          0xFF000000,
+        ), // APENAS o fundo da aplicação preto
         useMaterial3: true,
-        textTheme: const TextTheme(
-          displayLarge: AppTextStyles.displayLarge,
-          displayMedium: AppTextStyles.displayMedium,
-          headlineMedium: AppTextStyles.headlineMedium,
-          titleMedium: AppTextStyles.titleMedium,
-          bodyLarge: AppTextStyles.bodyLarge,
-          bodyMedium: AppTextStyles.bodyMedium,
-          bodySmall: AppTextStyles.bodySmall,
-          labelMedium: AppTextStyles.labelMedium,
-        ),
+        textTheme:
+            GoogleFonts.latoTextTheme(
+              Theme.of(context).textTheme.apply(
+                bodyColor: AppColors.onPrimary,
+                displayColor: AppColors.onPrimary,
+              ),
+            ).copyWith(
+              displayLarge: GoogleFonts.lato(
+                textStyle: AppTextStyles.displayLarge,
+              ),
+              displayMedium: GoogleFonts.lato(
+                textStyle: AppTextStyles.displayMedium,
+              ),
+              headlineMedium: GoogleFonts.lato(
+                textStyle: AppTextStyles.headlineMedium,
+              ),
+              titleMedium: GoogleFonts.lato(
+                textStyle: AppTextStyles.titleMedium,
+              ),
+              bodyLarge: GoogleFonts.lato(textStyle: AppTextStyles.bodyLarge),
+              bodyMedium: GoogleFonts.lato(textStyle: AppTextStyles.bodyMedium),
+              bodySmall: GoogleFonts.lato(textStyle: AppTextStyles.bodySmall),
+              labelMedium: GoogleFonts.lato(
+                textStyle: AppTextStyles.labelMedium,
+              ),
+            ),
       ),
       home: const HomePage(),
     );

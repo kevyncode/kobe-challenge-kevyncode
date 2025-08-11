@@ -41,7 +41,15 @@ class _SearchDialogState extends State<SearchDialog> {
           filled: true,
           fillColor: AppColors.background,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.medium),
+            borderRadius: BorderRadius.circular(50.0), // Completamente redondo
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(50.0), // Completamente redondo
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(50.0), // Completamente redondo
             borderSide: BorderSide.none,
           ),
         ),

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../data/models/character_model.dart';
-import '../../data/services/favorites_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../widgets/custom_app_bar.dart';
 
-/// Página de detalhes de um personagem específico
 class CharacterDetailPage extends StatefulWidget {
   final CharacterModel character;
 
@@ -15,83 +14,221 @@ class CharacterDetailPage extends StatefulWidget {
 }
 
 class _CharacterDetailPageState extends State<CharacterDetailPage> {
-  final FavoritesService _favoritesService = FavoritesService();
-  bool _isFavorite = false;
-  bool _isLoading = false;
+  final ScrollController _scrollController = ScrollController();
 
   @override
-  void initState() {
-    super.initState();
-    _checkFavoriteStatus();
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
-  /// Verifica se o personagem está nos favoritos
-  Future<void> _checkFavoriteStatus() async {
-    final isFavorite = await _favoritesService.isFavorite(widget.character.id);
-    if (mounted) {
-      setState(() {
-        _isFavorite = isFavorite;
-      });
-    }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF000000), // Fundo preto
+      appBar: CustomAppBar(
+        onFiltersPressed: () => Navigator.of(context).pop(), // Seta de voltar
+        onProfilePressed: () {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Perfil - Em breve!')));
+        },
+        useBackButton: true, // Parâmetro para usar seta ao invés de menu
+        scrollController: _scrollController, // Passar o scroll controller
+      ),
+      body: SingleChildScrollView(
+        controller: _scrollController, // Adicionar o controller no scroll
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Card expandido com informações
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppRadius.large),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Imagem do personagem
+                  ClipRRect(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(AppRadius.large),
+                      topRight: Radius.circular(AppRadius.large),
+                    ),
+                    child: CachedNetworkImage(
+                      imageUrl: widget.character.imageUrl,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: 300, // Altura maior para a página de detalhes
+                      placeholder: (context, url) => Container(
+                        height: 300,
+                        color: AppColors.surface,
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primary,
+                            strokeWidth: 3,
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        height: 300,
+                        color: AppColors.surface,
+                        child: Icon(
+                          Icons.person,
+                          color: AppColors.onSurfaceVariant,
+                          size: 80,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Seção com nome e informações
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                          Color(0xFF87A1FA), // Mesma cor dos cards
+                          Color(0xFF87A1FA),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(AppRadius.large),
+                        bottomRight: Radius.circular(AppRadius.large),
+                      ),
+                    ),
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Nome do personagem
+                        Text(
+                          widget.character.name.toUpperCase(),
+                          style: AppTextStyles.titleMedium.copyWith(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Status com indicador colorido (sem label)
+                        Row(
+                          children: [
+                            Container(
+                              width: 12,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: _getStatusColor(widget.character.status),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              '${widget.character.status} - ${widget.character.species}',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Gênero
+                        _buildDetailRow(
+                          label: 'Gender:',
+                          value: widget.character.gender,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Espécie
+                        _buildDetailRow(
+                          label: 'Species:',
+                          value: widget.character.species,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Origem
+                        _buildDetailRow(
+                          label: 'Origin:',
+                          value: widget.character.origin.name,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Última localização conhecida
+                        _buildDetailRow(
+                          label: 'Last known location:',
+                          value: widget.character.location.name,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Primeira aparição
+                        _buildDetailRow(
+                          label: 'First seen in:',
+                          value: widget.character.episodes.isNotEmpty
+                              ? 'Episode ${widget.character.episodes.first.replaceAll(RegExp(r'[^0-9]'), '')}'
+                              : 'Unknown',
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Número de episódios
+                        _buildDetailRow(
+                          label: 'Episodes:',
+                          value:
+                              '${widget.character.episodes.length} episode${widget.character.episodes.length != 1 ? 's' : ''}',
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  /// Alterna o status de favorito do personagem
-  Future<void> _toggleFavorite() async {
-    if (_isLoading) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      if (_isFavorite) {
-        await _favoritesService.removeFromFavorites(widget.character.id);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Removido dos favoritos'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-      } else {
-        await _favoritesService.addToFavorites(widget.character);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Adicionado aos favoritos'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-        }
-      }
-
-      if (mounted) {
-        setState(() {
-          _isFavorite = !_isFavorite;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro: ${e.toString()}'),
-            backgroundColor: AppColors.error,
+  // Widget helper para criar linhas de detalhes sem ícones
+  Widget _buildDetailRow({required String label, required String value}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTextStyles.bodySmall.copyWith(
+            color: Colors.white70,
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
           ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: Colors.white,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
   }
 
-  /// Retorna a cor baseada no status do personagem
-  Color _getStatusColor() {
-    switch (widget.character.status.toLowerCase()) {
+  // Cor do status
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
       case 'alive':
         return AppColors.statusAlive;
       case 'dead':
@@ -99,194 +236,5 @@ class _CharacterDetailPageState extends State<CharacterDetailPage> {
       default:
         return AppColors.statusUnknown;
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(widget.character.name, style: AppTextStyles.headlineMedium),
-        backgroundColor: AppColors.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.onPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          _isLoading
-              ? Container(
-                  margin: EdgeInsets.all(AppSpacing.medium),
-                  width: AppSizes.iconMedium,
-                  height: AppSizes.iconMedium,
-                  child: const CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AppColors.primary,
-                  ),
-                )
-              : IconButton(
-                  icon: Icon(
-                    _isFavorite ? Icons.favorite : Icons.favorite_border,
-                    color: _isFavorite
-                        ? AppColors.error
-                        : AppColors.onSurfaceVariant,
-                  ),
-                  onPressed: _toggleFavorite,
-                  tooltip: _isFavorite
-                      ? 'Remover dos favoritos'
-                      : 'Adicionar aos favoritos',
-                ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(AppSpacing.medium),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Imagem do personagem
-            Center(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.large),
-                child: CachedNetworkImage(
-                  imageUrl: widget.character.imageUrl,
-                  width: AppSizes.characterImageLarge * 2,
-                  height: AppSizes.characterImageLarge * 2,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    width: AppSizes.characterImageLarge * 2,
-                    height: AppSizes.characterImageLarge * 2,
-                    color: AppColors.surface,
-                    child: const Icon(
-                      Icons.person,
-                      size: 64,
-                      color: AppColors.onSurfaceVariant,
-                    ),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    width: AppSizes.characterImageLarge * 2,
-                    height: AppSizes.characterImageLarge * 2,
-                    color: AppColors.surface,
-                    child: const Icon(
-                      Icons.error,
-                      size: 64,
-                      color: AppColors.error,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            SizedBox(height: AppSpacing.large),
-
-            // Nome do personagem
-            Text(
-              widget.character.name,
-              style: AppTextStyles.displayLarge,
-              textAlign: TextAlign.center,
-            ),
-
-            SizedBox(height: AppSpacing.medium),
-
-            // Informações básicas
-            _buildInfoSection('Informações Básicas', [
-              _buildInfoRow(
-                'Status',
-                widget.character.status,
-                _getStatusColor(),
-              ),
-              _buildInfoRow('Espécie', widget.character.species),
-              _buildInfoRow('Gênero', widget.character.gender),
-              if (widget.character.type.isNotEmpty)
-                _buildInfoRow('Tipo', widget.character.type),
-            ]),
-
-            SizedBox(height: AppSpacing.large),
-
-            // Localização
-            _buildInfoSection('Localização', [
-              _buildInfoRow('Origem', widget.character.origin.name),
-              _buildInfoRow(
-                'Última localização',
-                widget.character.location.name,
-              ),
-            ]),
-
-            SizedBox(height: AppSpacing.large),
-
-            // Episódios
-            _buildInfoSection('Episódios', [
-              _buildInfoRow(
-                'Total de episódios',
-                '${widget.character.episodes.length}',
-              ),
-              if (widget.character.episodes.isNotEmpty)
-                _buildInfoRow(
-                  'Primeiro episódio',
-                  widget.character.firstEpisodeNumber,
-                ),
-              if (widget.character.episodes.isNotEmpty)
-                _buildInfoRow(
-                  'Último episódio',
-                  widget.character.lastEpisodeNumber,
-                ),
-            ]),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Constrói uma seção de informações
-  Widget _buildInfoSection(String title, List<Widget> children) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: AppTextStyles.headlineMedium),
-        SizedBox(height: AppSpacing.small),
-        Container(
-          width: double.infinity,
-          padding: EdgeInsets.all(AppSpacing.medium),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppRadius.medium),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: children,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Constrói uma linha de informação
-  Widget _buildInfoRow(String label, String value, [Color? valueColor]) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: AppSpacing.small),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 1,
-            child: Text(
-              '$label:',
-              style: AppTextStyles.bodyMedium.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          SizedBox(width: AppSpacing.small),
-          Expanded(
-            flex: 2,
-            child: Text(
-              value,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: valueColor ?? AppColors.onPrimary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

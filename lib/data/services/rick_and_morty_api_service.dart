@@ -5,8 +5,7 @@ import '../models/api_response_model.dart';
 
 /// Serviço responsável por fazer chamadas para a API do Rick and Morty
 class RickAndMortyApiService {
-  static const String _baseUrl = 'https://rickandmortyapi.com/api';
-  static const String _charactersEndpoint = '$_baseUrl/character';
+  static const String _baseUrl = 'rickandmortyapi.com';
   static const Duration _timeout = Duration(seconds: 30);
   static const int _maxRetries = 3;
 
@@ -39,7 +38,7 @@ class RickAndMortyApiService {
   /// Verifica se a API está disponível
   Future<bool> isApiAvailable() async {
     try {
-      final uri = Uri.parse(_baseUrl);
+      final uri = Uri.https(_baseUrl, '/api');
       final response = await _client.get(uri).timeout(Duration(seconds: 10));
       return response.statusCode == 200;
     } catch (e) {
@@ -53,25 +52,48 @@ class RickAndMortyApiService {
   /// [name] - Nome do personagem para filtrar
   /// [status] - Status do personagem (alive, dead, unknown)
   /// [species] - Espécie do personagem
-  /// [gender] - Gênero do personagem
+  /// [gender] - Gênero do personagem (male, female, genderless, unknown)
+  /// [type] - Tipo do personagem
+  /// [location] - Localização do personagem
+  /// [origin] - Origem do personagem
   Future<ApiResponseModel<CharacterModel>> getCharacters({
     int page = 1,
     String? name,
     String? status,
     String? species,
     String? gender,
+    String? type,
+    String? location,
+    String? origin,
   }) async {
     try {
-      final uri = Uri.parse(_charactersEndpoint).replace(
-        queryParameters: {
-          'page': page.toString(),
-          if (name != null && name.isNotEmpty) 'name': name,
-          if (status != null && status.isNotEmpty) 'status': status,
-          if (species != null && species.isNotEmpty) 'species': species,
-          if (gender != null && gender.isNotEmpty) 'gender': gender,
-        },
-      );
+      // Constrói os parâmetros da query
+      final Map<String, String> queryParams = {'page': page.toString()};
 
+      // Adiciona filtros apenas se não estiverem vazios
+      if (name != null && name.isNotEmpty) {
+        queryParams['name'] = name;
+      }
+      if (status != null && status.isNotEmpty) {
+        queryParams['status'] = status.toLowerCase();
+      }
+      if (species != null && species.isNotEmpty) {
+        queryParams['species'] = species;
+      }
+      if (gender != null && gender.isNotEmpty) {
+        queryParams['gender'] = gender.toLowerCase();
+      }
+      if (type != null && type.isNotEmpty) {
+        queryParams['type'] = type;
+      }
+      if (location != null && location.isNotEmpty) {
+        queryParams['location'] = location;
+      }
+      if (origin != null && origin.isNotEmpty) {
+        queryParams['origin'] = origin;
+      }
+
+      final uri = Uri.https(_baseUrl, '/api/character', queryParams);
       final response = await _makeRequest(uri);
 
       if (response.statusCode == 200) {
@@ -101,7 +123,7 @@ class RickAndMortyApiService {
   /// Busca um personagem específico pelo ID
   Future<CharacterModel> getCharacterById(int id) async {
     try {
-      final uri = Uri.parse('$_charactersEndpoint/$id');
+      final uri = Uri.https(_baseUrl, '/api/character/$id');
       final response = await _makeRequest(uri);
 
       if (response.statusCode == 200) {
@@ -124,7 +146,7 @@ class RickAndMortyApiService {
 
     try {
       final idsString = ids.join(',');
-      final uri = Uri.parse('$_charactersEndpoint/$idsString');
+      final uri = Uri.https(_baseUrl, '/api/character/$idsString');
       final response = await _makeRequest(uri);
 
       if (response.statusCode == 200) {
@@ -167,6 +189,113 @@ class RickAndMortyApiService {
         'Erro ao carregar personagens favoritos: ${e.toString()}',
       );
     }
+  }
+
+  /// Busca localizações disponíveis
+  Future<List<String>> getAvailableLocations() async {
+    try {
+      final uri = Uri.https(_baseUrl, '/api/location');
+      final response = await _makeRequest(uri);
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body) as Map<String, dynamic>;
+        final results = jsonData['results'] as List;
+        return results
+            .map((location) => location['name'] as String)
+            .toSet() // Remove duplicatas
+            .toList();
+      } else {
+        return [];
+      }
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /// Busca espécies disponíveis (método auxiliar para sugestões)
+  Future<List<String>> getAvailableSpecies() async {
+    // Como a API não tem endpoint específico para espécies,
+    // retornamos uma lista baseada na documentação
+    return [
+      'Human',
+      'Alien',
+      'Robot',
+      'Animal',
+      'Cronenberg',
+      'Disease',
+      'Mythological Creature',
+      'Humanoid',
+      'Unknown',
+    ];
+  }
+
+  /// Busca tipos disponíveis (método auxiliar para sugestões)
+  Future<List<String>> getAvailableTypes() async {
+    // Como a API não tem endpoint específico para tipos,
+    // retornamos uma lista vazia ou tipos conhecidos
+    return [];
+  }
+
+  /// Método para fazer busca combinada com múltiplos filtros
+  Future<ApiResponseModel<CharacterModel>> searchCharactersWithFilters({
+    int page = 1,
+    String? searchQuery,
+    List<String>? statusFilters,
+    List<String>? genderFilters,
+    List<String>? speciesFilters,
+  }) async {
+    try {
+      final Map<String, String> queryParams = {'page': page.toString()};
+
+      // Busca por nome
+      if (searchQuery != null && searchQuery.isNotEmpty) {
+        queryParams['name'] = searchQuery;
+      }
+
+      // Filtros de status (alive, dead, unknown)
+      if (statusFilters != null && statusFilters.isNotEmpty) {
+        queryParams['status'] = statusFilters.first.toLowerCase();
+      }
+
+      // Filtros de gênero
+      if (genderFilters != null && genderFilters.isNotEmpty) {
+        queryParams['gender'] = genderFilters.first.toLowerCase();
+      }
+
+      // Filtros de espécie
+      if (speciesFilters != null && speciesFilters.isNotEmpty) {
+        queryParams['species'] = speciesFilters.first;
+      }
+
+      final uri = Uri.https(_baseUrl, '/api/character', queryParams);
+      final response = await _makeRequest(uri);
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body) as Map<String, dynamic>;
+        return ApiResponseModel.fromJson(
+          jsonData,
+          (json) => CharacterModel.fromJson(json),
+        );
+      } else if (response.statusCode == 404) {
+        return const ApiResponseModel(
+          info: ApiInfoModel(count: 0, pages: 0),
+          results: [],
+        );
+      } else {
+        throw ApiException(
+          'Falha ao carregar personagens filtrados',
+          response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('Erro na busca filtrada: ${e.toString()}');
+    }
+  }
+
+  /// Limpa cache (se implementado no futuro)
+  void clearCache() {
+    // Implementação futura para limpar cache local
   }
 
   /// Libera recursos do cliente HTTP

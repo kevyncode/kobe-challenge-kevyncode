@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Centraliza todas as constantes de cores da aplicação
 class AppColors {
@@ -14,6 +15,7 @@ class AppColors {
   static const Color onPrimary = Colors.white;
   static const Color onSurface = Color(0xFFB0B0B0);
   static const Color onSurfaceVariant = Color(0xFF9E9E9E);
+  static const Color textPrimary = Colors.white;
 
   // Estados de status do personagem
   static const Color statusAlive = Color(0xFF55CC44);
@@ -27,49 +29,41 @@ class AppColors {
 
 /// Centraliza todos os estilos de texto da aplicação
 class AppTextStyles {
-  static const TextStyle displayLarge = TextStyle(
+  static TextStyle get displayLarge => GoogleFonts.lato(
     color: AppColors.onPrimary,
     fontSize: 24,
     fontWeight: FontWeight.bold,
   );
 
-  static const TextStyle displayMedium = TextStyle(
+  static TextStyle get displayMedium => GoogleFonts.lato(
     color: AppColors.onPrimary,
     fontSize: 20,
     fontWeight: FontWeight.bold,
   );
 
-  static const TextStyle headlineMedium = TextStyle(
+  static TextStyle get headlineMedium => GoogleFonts.lato(
     color: AppColors.onPrimary,
     fontSize: 18,
     fontWeight: FontWeight.w600,
   );
 
-  static const TextStyle titleMedium = TextStyle(
+  static TextStyle get titleMedium => GoogleFonts.lato(
     color: AppColors.onPrimary,
     fontSize: 16,
     fontWeight: FontWeight.w500,
   );
 
-  static const TextStyle bodyLarge = TextStyle(
-    color: AppColors.onPrimary,
-    fontSize: 16,
-  );
+  static TextStyle get bodyLarge =>
+      GoogleFonts.lato(color: AppColors.onPrimary, fontSize: 16);
 
-  static const TextStyle bodyMedium = TextStyle(
-    color: AppColors.onSurface,
-    fontSize: 14,
-  );
+  static TextStyle get bodyMedium =>
+      GoogleFonts.lato(color: AppColors.onSurface, fontSize: 14);
 
-  static const TextStyle bodySmall = TextStyle(
-    color: AppColors.onSurface,
-    fontSize: 12,
-  );
+  static TextStyle get bodySmall =>
+      GoogleFonts.lato(color: AppColors.onSurface, fontSize: 12);
 
-  static const TextStyle labelMedium = TextStyle(
-    color: AppColors.onSurface,
-    fontSize: 12,
-  );
+  static TextStyle get labelMedium =>
+      GoogleFonts.lato(color: AppColors.onSurface, fontSize: 12);
 }
 
 /// Centraliza todas as dimensões e espaçamentos

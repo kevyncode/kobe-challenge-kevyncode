@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import '../../data/models/character_model.dart';
 import '../../data/services/rick_and_morty_api_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/page_transitions.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/search_dialog.dart';
 import '../widgets/characters_list.dart';
+import '../widgets/filters_drawer.dart'; // Importar o drawer
 import 'character_detail_page.dart';
 
 /// Página principal que exibe a lista de personagens do Rick and Morty
@@ -19,6 +21,8 @@ class _HomePageState extends State<HomePage> {
   final RickAndMortyApiService _apiService = RickAndMortyApiService();
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final GlobalKey<ScaffoldState> _scaffoldKey =
+      GlobalKey<ScaffoldState>(); // Para controlar o drawer
 
   List<CharacterModel> _characters = [];
   bool _isLoading = false;
@@ -27,6 +31,7 @@ class _HomePageState extends State<HomePage> {
   int _currentPage = 1;
   bool _hasNextPage = true;
   String _currentSearch = '';
+  Map<String, dynamic> _currentFilters = {}; // Filtros ativos
 
   @override
   void initState() {
@@ -42,7 +47,7 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  /// Carrega os personagens da API
+  /// Carrega os personagens da API com filtros
   Future<void> _loadCharacters({bool refresh = false}) async {
     if (_isLoading) return;
 
@@ -60,6 +65,9 @@ class _HomePageState extends State<HomePage> {
       final response = await _apiService.getCharacters(
         page: _currentPage,
         name: _currentSearch.isEmpty ? null : _currentSearch,
+        status: _currentFilters['status']?.join(','),
+        species: _currentFilters['species']?.join(','),
+        gender: _currentFilters['gender']?.join(','),
       );
 
       setState(() {
@@ -79,6 +87,11 @@ class _HomePageState extends State<HomePage> {
         _errorMessage = e.toString();
       });
     }
+  }
+
+  /// Função específica para o pull-to-refresh
+  Future<void> _onRefresh() async {
+    await _loadCharacters(refresh: true);
   }
 
   /// Trata o scroll da lista para carregar mais itens
@@ -107,21 +120,27 @@ class _HomePageState extends State<HomePage> {
     _searchCharacters('');
   }
 
-  /// Navega para a página de detalhes do personagem
+  /// Navega para a página de detalhes do personagem com transição suave
   void _navigateToCharacterDetail(CharacterModel character) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => CharacterDetailPage(character: character),
+      PageTransitions.subtleFadeTransition<void>(
+        page: CharacterDetailPage(character: character),
       ),
     );
   }
 
-  /// Abre menu de filtros (implementação futura)
+  /// Abre o drawer de filtros
   void _openFiltersMenu() {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Filtros - Em breve!')));
+    _scaffoldKey.currentState?.openDrawer();
+  }
+
+  /// Aplica os filtros selecionados
+  void _onFiltersChanged(Map<String, dynamic> filters) {
+    setState(() {
+      _currentFilters = filters;
+    });
+    _loadCharacters(refresh: true);
   }
 
   /// Abre perfil do usuário (implementação futura)
@@ -148,25 +167,41 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      key: _scaffoldKey, // Chave para controlar o drawer
+      backgroundColor: const Color(0xFF000000),
       appBar: CustomAppBar(
         onFiltersPressed: _openFiltersMenu,
         onProfilePressed: _openUserProfile,
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _openSearchDialog,
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.search, color: Colors.white),
-      ),
-      body: CharactersList(
-        characters: _characters,
         scrollController: _scrollController,
-        isLoading: _isLoading,
-        hasError: _hasError,
-        errorMessage: _errorMessage,
-        hasNextPage: _hasNextPage,
-        onCharacterTap: _navigateToCharacterDetail,
-        onRetry: () => _loadCharacters(refresh: true),
+      ),
+      drawer: FiltersDrawer(
+        currentFilters: _currentFilters,
+        onFiltersChanged: _onFiltersChanged,
+      ),
+      floatingActionButton: SizedBox(
+        width: 58.0,
+        height: 58.0,
+        child: FloatingActionButton(
+          onPressed: _openSearchDialog,
+          backgroundColor: AppColors.primary,
+          shape: const CircleBorder(),
+          child: const Icon(Icons.search, color: Colors.white, size: 24),
+        ),
+      ),
+      body: RefreshIndicator(
+        onRefresh: _onRefresh,
+        color: AppColors.primary,
+        backgroundColor: AppColors.surface,
+        child: CharactersList(
+          characters: _characters,
+          scrollController: _scrollController,
+          isLoading: _isLoading,
+          hasError: _hasError,
+          errorMessage: _errorMessage,
+          hasNextPage: _hasNextPage,
+          onCharacterTap: _navigateToCharacterDetail,
+          onRetry: () => _loadCharacters(refresh: true),
+        ),
       ),
     );
   }
