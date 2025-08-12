@@ -78,10 +78,7 @@ lib/
 ### 🏠 Tela Principal
 
 <div align="center">
-  <video width="300" controls>
-    <source src="screenshots/home_light_mode.mp4" type="video/mp4">
-    Seu navegador não suporta vídeos.
-  </video>
+  <img src="screenshots/home_demo.gif" alt="" width="300"/>
 </div>
 
 _Lista de personagens com scroll infinito e design moderno_
@@ -89,10 +86,7 @@ _Lista de personagens com scroll infinito e design moderno_
 ### 🔍 Sistema de Busca
 
 <div align="center">
-  <video width="300" controls>
-    <source src="screenshots/search_empty.mp4" type="video/mp4">
-    Seu navegador não suporta vídeos.
-  </video>
+  <img src="screenshots/search_demo.gif" width="300"/>
 </div>
 
 _Busca em tempo real com sugestões inteligentes_
@@ -100,10 +94,7 @@ _Busca em tempo real com sugestões inteligentes_
 ### 🎛️ Filtros
 
 <div align="center">
-  <video width="300" controls>
-    <source src="screenshots/filters_open.mp4" type="video/mp4">
-    Seu navegador não suporta vídeos.
-  </video>
+  <img src="screenshots/filters_demo.gif" width="300"/>
 </div>
 
 _Filtros por status, espécie e gênero_
@@ -198,8 +189,8 @@ O design segue o visual dark e futurista de Rick and Morty, com:
   *Mobile Developer Flutter*
   
   [![GitHub](https://img.shields.io/badge/GitHub-kevyncode-black.svg)](https://github.com/kevyncode)
-  [![LinkedIn](https://img.shields.io/badge/LinkedIn-kevynrodigues-blue.svg)](https://linkedin.com/in/kevynrodigues)
-  [![Email](https://img.shields.io/badge/Email-kevyn@example.com-red.svg)](mailto:kevyn@example.com)
+  [![LinkedIn](https://img.shields.io/badge/LinkedIn-kevynrodigues-blue.svg)](https://www.linkedin.com/in/kevyncode/)
+  [![Email](https://img.shields.io/badge/Email-kevyn@example.com-red.svg)](mailto:kevyncodes@gmail.com)
 </div>
 
 ---
