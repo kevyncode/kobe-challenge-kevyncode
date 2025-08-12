@@ -221,15 +221,46 @@ class _HomePageState extends State<HomePage> {
         currentFilters: _currentFilters,
         onFiltersChanged: _onFiltersChanged,
       ),
-      floatingActionButton: SizedBox(
-        width: 58.0,
-        height: 58.0,
-        child: FloatingActionButton(
-          onPressed: _openSearchDialog,
-          backgroundColor: AppColors.primary,
-          shape: const CircleBorder(),
-          heroTag: "search",
-          child: const Icon(Icons.search, color: Colors.white, size: 24),
+      floatingActionButton: Container(
+        width: 70.0, // Aumentado de 58 para 70
+        height: 70.0, // Aumentado de 58 para 70
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.primary,
+              AppColors.primary.withValues(alpha: 0.8),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(
+            16,
+          ), // Bordas arredondadas, não mais círculo
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            onTap: _openSearchDialog,
+            borderRadius: BorderRadius.circular(16),
+            child: const Center(
+              child: Icon(
+                Icons.search_rounded,
+                color: Colors.white,
+                size: 34, // Aumentado de 24 para 28
+              ),
+            ),
+          ),
         ),
       ),
       body: RefreshIndicator(
