@@ -190,7 +190,7 @@ O design segue o visual dark e futurista de Rick and Morty, com:
   
   [![GitHub](https://img.shields.io/badge/GitHub-kevyncode-black.svg)](https://github.com/kevyncode)
   [![LinkedIn](https://img.shields.io/badge/LinkedIn-kevynrodigues-blue.svg)](https://www.linkedin.com/in/kevyncode/)
-  [![Email](https://img.shields.io/badge/Email-kevyn@example.com-red.svg)](mailto:kevyncodes@gmail.com)
+  [![Email](https://img.shields.io/badge/Email-kevyncodes@gmail.com-red.svg)](mailto:kevyncodes@gmail.com)
 </div>
 
 ---
