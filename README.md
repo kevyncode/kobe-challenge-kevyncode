@@ -186,7 +186,7 @@ O design segue o visual dark e futurista de Rick and Morty, com:
   <img src="https://github.com/kevyncode.png" alt="Kevyn Rodrigues" width="150" style="border-radius: 50%"/>
   
   **Kevyn Rodrigues**  
-  *Mobile Developer Flutter*
+  *Developer Full-Stack*
   
   [![GitHub](https://img.shields.io/badge/GitHub-kevyncode-black.svg)](https://github.com/kevyncode)
   [![LinkedIn](https://img.shields.io/badge/LinkedIn-kevynrodigues-blue.svg)](https://www.linkedin.com/in/kevyncode/)
